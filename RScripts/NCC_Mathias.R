@@ -1,6 +1,5 @@
 #####################Created on 9/26/2022 by Justin Mathias#####################
-##This script will serve as a central hub for commonly utilized functions for ##
-##the NCC Fire Review.
+##This script will document
 
 #First, load all packages
 library("easypackages")
@@ -11,6 +10,7 @@ belowground <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/N
                          sheet = "Belowground",
                          startRow = 3)
 
-#Check out belowground structure
-colnames(belowground)
-
+#Let's start by creating
+dms.to.dd <- function(dms){
+    dd <- conv_unit(dms, from = "deg_min_sec", to = "dec_deg")
+}
