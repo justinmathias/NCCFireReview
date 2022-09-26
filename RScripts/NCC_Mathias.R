@@ -4,12 +4,13 @@
 
 #First, load all packages
 library("easypackages")
-libraries(c("tidyverse", "googlesheets4", "openxlsx"))
+libraries(c("tidyverse", "googlesheets4", "openxlsx", "measurements"))
 
-#Read files
-savedrecs <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Data/LitSearch_Revised_Final_DataExtration_V1.xlsx", sheet = "savedrecs")
-include <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Data/LitSearch_Revised_Final_DataExtration_V1.xlsx", sheet = "Include")
-belowground <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Data/LitSearch_Revised_Final_DataExtration_V1.xlsx", sheet = "Belowground")
+#Read files, starting with row three, where actual
+belowground <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Data/LitSearch_Revised_Final_DataExtration_V1.xlsx",
+                         sheet = "Belowground",
+                         startRow = 3)
 
 #Check out belowground structure
-belowground %>% head()
+colnames(belowground)
+
