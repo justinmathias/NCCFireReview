@@ -7,7 +7,7 @@ library("easypackages")
 libraries(c("tidyverse", "openxlsx", "measurements"))
 
 
-# Justin's edits ----------------------------------------------------------
+# Functions added by justin ----------------------------------------------------------
 
 #Let's start by creating functions that we will then wrap into a single function for working with lat/lon
 #We will build out complexity later to deal with formatting

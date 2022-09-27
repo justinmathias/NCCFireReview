@@ -10,7 +10,3 @@ belowground <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/N
                          sheet = "Belowground",
                          startRow = 3)
 
-#Let's start by creating
-dms.to.dd <- function(dms){
-    dd <- conv_unit(dms, from = "deg_min_sec", to = "dec_deg")
-}
