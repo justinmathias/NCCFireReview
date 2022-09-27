@@ -21,7 +21,7 @@ dd.to.dms <- function(dd) {
 coord.convert <- function(coord, fn){
   fns <- c("dms.to.dd", "dd.to.dms") #First list all possible functions
   if(!fn %in% fns){
-    stop(paste0("Specified function must be one of:\n"), paste(fns, " ")) #Write error message if fn isn't listed
+    stop(paste0("Specified function must be one of:"), paste(fns, " ")) #Write error message if fn isn't listed
   }
   if(fn == "dms.to.dd"){ #Function for dms to dd
     dd <- dms.to.dd(coord)
