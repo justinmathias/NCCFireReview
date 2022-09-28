@@ -1,4 +1,4 @@
-#####################Created on 9/26/2022 by Justin Mathias#####################
+##Created on 9/26/2022 by Justin Mathias ##
 ##This script will serve as a central hub for commonly utilized functions for ##
 ##the NCC Fire Review.
 
@@ -8,8 +8,8 @@ libraries(c("tidyverse", "openxlsx", "measurements"))
 
 
 # Functions added by justin ----------------------------------------------------------
-
-#Let's start by creating functions that we will then wrap into a single function for working with lat/lon
+##Working with lat/lon----
+#Let's start by creating functions that we will then wrap into a single function
 #We will build out complexity later to deal with formatting
 dms.to.dd <- function(dms) {
   dd <- conv_unit(dms, from = "deg_min_sec", to = "dec_deg")
@@ -37,5 +37,11 @@ coord.convert("21 35 45", "dms.to.dd")
 coord.convert("21 35 45", "dm.to.dd") #Should throw an error
 
 
+#Parsing out parentheses----
+par.extract <- function(x) { #Create function to extract vars within parentheses
+  extracted <- gsub("[\\(\\)]", "", regmatches(x, gregexpr("\\(.*?\\)", x)))
+  return(as.numeric(extracted))
+}
 
-
+j <- c("5 (78)", "4 (56)") #Create data
+par.extract(j) #Test extraction
