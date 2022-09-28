@@ -67,6 +67,9 @@ sep.prnth <- function(dat, in_col, return = "Both") {
 x <- data.frame(Value = #Create test data frame
                   c("5 (78)",
                     "4 (56)"))
+y <- data.frame(Value = #Create test data frame
+                  c("5 ± 78",
+                    "4 ± 56"))
 
-sep.prnth(x, in_col = Value, return = "StdErr") #Test!
+sep.prnth(y, in_col = Value, return = "StdErr") #Test! Works on parentheses and plus/minus!
 
