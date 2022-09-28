@@ -38,10 +38,26 @@ coord.convert("21 35 45", "dm.to.dd") #Should throw an error
 
 
 #Parsing out parentheses----
-par.extract <- function(x) { #Create function to extract vars within parentheses
-  extracted <- gsub("[\\(\\)]", "", regmatches(x, gregexpr("\\(.*?\\)", x)))
-  return(as.numeric(extracted))
+sep.prnth <- function(dat, in_col, return = "Both") {
+  if (return == "Both"){
+    dat |> separate({{in_col}}, into = c("Value", "Error"))
+  } else if (return == "Value") {
+    sep <- dat |> separate({{in_col}}, into = c("Value", "Error"))
+    sep$Value <- as.numeric(sep$Value)
+    sep$Error <- as.numeric(sep$Error)
+    return(sep$Value)
+  } else if (return == "Error") {
+    sep <- dat |> separate({{in_col}}, into = c("Value", "Error"))
+    sep$Value <- as.numeric(sep$Value)
+    sep$Error <- as.numeric(sep$Error)
+    return(sep$Error)
+  } else {
+    return("Must be Both, Value, or Error")
+  }
 }
 
-j <- c("5 (78)", "4 (56)") #Create data
-par.extract(j) #Test extraction
+j <- data.frame(Value = #Create data frame
+                  c("5 (78)",
+                    "4 (56)"))
+
+sep.prnth(j, in_col = Value, return = "Both") #Test!
