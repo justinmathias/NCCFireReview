@@ -40,14 +40,22 @@ coord.convert("21 35 45", "dm.to.dd") #Should throw an error
 #Parsing out parentheses----
 sep.prnth <- function(dat, in_col, return = "Both") {
   if (return == "Both"){
+    defaultW <- getOption("warn")
+    options(warn = -1)
     dat |> separate({{in_col}}, into = c("Value", "Error"))
   } else if (return == "Value") {
+    defaultW <- getOption("warn")
+    options(warn = -1)
     sep <- dat |> separate({{in_col}}, into = c("Value", "Error"))
+    options(warn = defaultW)
     sep$Value <- as.numeric(sep$Value)
     sep$Error <- as.numeric(sep$Error)
     return(sep$Value)
   } else if (return == "Error") {
+    defaultW <- getOption("warn")
+    options(warn = -1)
     sep <- dat |> separate({{in_col}}, into = c("Value", "Error"))
+    options(warn = defaultW)
     sep$Value <- as.numeric(sep$Value)
     sep$Error <- as.numeric(sep$Error)
     return(sep$Error)
@@ -61,3 +69,4 @@ j <- data.frame(Value = #Create data frame
                     "4 (56)"))
 
 sep.prnth(j, in_col = Value, return = "Both") #Test!
+
