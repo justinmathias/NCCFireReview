@@ -42,25 +42,25 @@ sep.prnth <- function(dat, in_col, return = "Both") {
   if (return == "Both"){
     defaultW <- getOption("warn")
     options(warn = -1)
-    dat |> separate({{in_col}}, into = c("Value", "Error"))
+    dat |> separate({{in_col}}, into = c("Value", "StdErr"))
   } else if (return == "Value") {
     defaultW <- getOption("warn")
     options(warn = -1)
-    sep <- dat |> separate({{in_col}}, into = c("Value", "Error"))
+    sep <- dat |> separate({{in_col}}, into = c("Value", "StdErr"))
     options(warn = defaultW)
     sep$Value <- as.numeric(sep$Value)
-    sep$Error <- as.numeric(sep$Error)
+    sep$StdErr <- as.numeric(sep$StdErr)
     return(sep$Value)
-  } else if (return == "Error") {
+  } else if (return == "StdErr") {
     defaultW <- getOption("warn")
     options(warn = -1)
-    sep <- dat |> separate({{in_col}}, into = c("Value", "Error"))
+    sep <- dat |> separate({{in_col}}, into = c("Value", "StdErr"))
     options(warn = defaultW)
     sep$Value <- as.numeric(sep$Value)
-    sep$Error <- as.numeric(sep$Error)
-    return(sep$Error)
+    sep$StdErr <- as.numeric(sep$StdErr)
+    return(sep$StdErr)
   } else {
-    return("Must be Both, Value, or Error")
+    return("Must be Both, Value, or StdErr")
   }
 }
 
@@ -68,5 +68,5 @@ x <- data.frame(Value = #Create test data frame
                   c("5 (78)",
                     "4 (56)"))
 
-sep.prnth(x, in_col = Value, return = "Error") #Test!
+sep.prnth(x, in_col = Value, return = "StdErr") #Test!
 
