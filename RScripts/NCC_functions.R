@@ -37,8 +37,8 @@ coord.convert("21 35 45", "dms.to.dd")
 coord.convert("21 35 45", "dm.to.dd") #Should throw an error
 
 
-#Parsing out parentheses----
-sep.prnth <- function(dat, in_col, return = "Both") {
+#Parsing out data (works for parentheses and plus/minus)----
+sep.data <- function(dat, in_col, return = "Both") {
   if (return == "Both"){
     defaultW <- getOption("warn")
     options(warn = -1)
@@ -65,11 +65,46 @@ sep.prnth <- function(dat, in_col, return = "Both") {
 }
 
 x <- data.frame(Value = #Create test data frame
-                  c("5 (78)",
-                    "4 (56)"))
-y <- data.frame(Value = #Create test data frame
-                  c("5 ± 78",
-                    "4 ± 56"))
+                  c("5(78)",
+                    "4 (56)",
+                    "4 ± 56",
+                    "4±56"))
 
-sep.prnth(y, in_col = Value, return = "StdErr") #Test! Works on parentheses and plus/minus!
+sep.data(x, in_col = Value) #Test! Works on parentheses and plus/minus!
+
+#Parsing out lat/lon----
+sep.coords <- function(dat, in_col, return = "LatLon") {
+  if (return == "LatLon"){
+    defaultW <- getOption("warn")
+    options(warn = -1)
+    dat |> separate({{in_col}}, into = c("Lat", "Lon"), sep = "\\/|\\,") #Separate can only handle one argument. Use regex to do the job
+  } else if (return == "Lat") {
+    defaultW <- getOption("warn")
+    options(warn = -1)
+    sep <- dat |> separate({{in_col}}, into = c("Lat", "Lon"), sep = "\\/|\\,")
+    options(warn = defaultW)
+    sep$Lat <- as.numeric(sep$Lat)
+    sep$Lon <- as.numeric(sep$Lon)
+    return(sep$Lat)
+  } else if (return == "Lon") {
+    defaultW <- getOption("warn")
+    options(warn = -1)
+    sep <- dat |> separate({{in_col}}, into = c("Lat", "Lon"), sep = "\\/|\\,")
+    options(warn = defaultW)
+    sep$Lat <- as.numeric(sep$Lat)
+    sep$Lon <- as.numeric(sep$Lon)
+    return(sep$Lon)
+  } else {
+    return("Must be LatLon, Lat, or Lon")
+  }
+}
+
+x <- data.frame("latlon" =
+                  c("43.5/-67.9",
+                    "43.5,-67.9"))
+sep.coords(x, in_col = "latlon")
+
+
+
+
 
