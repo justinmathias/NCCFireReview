@@ -11,11 +11,19 @@ libraries(c("tidyverse", "openxlsx", "measurements"))
 ##Working with lat/lon----
 #Let's start by creating functions that we will then wrap into a single function
 #We will build out complexity later to deal with formatting
-dms.to.dd <- function(dms) {
-  dd <- conv_unit(dms, from = "deg_min_sec", to = "dec_deg")
+dms.to.dd <- function(dms, dms2 = NULL) {
+  if (is.null(dms2) != TRUE) {
+  dd <- round(as.numeric(conv_unit(dms, from = "deg_min_sec", to = "dec_deg")), 4)
+  dd2 <- round(as.numeric(conv_unit(dms2, from = "deg_min_sec", to = "dec_deg")), 4)
+  paste(dd, dd2, sep = ",")
+  } else if (is.null(dms2) == TRUE) {
+    dd <- round(as.numeric(conv_unit(dms, from = "deg_min_sec", to = "dec_deg")), 4)
+    dd
   }
-dd.to.dms <- function(dd) {
+}
+dd.to.dms <- function(dd, dd2) {
   dms <- conv_unit(dd, from = "dec_deg", to = "deg_min_sec")
+  return(dms)
 }
 
 coord.convert <- function(coord, fn){
@@ -42,22 +50,18 @@ sep.data <- function(dat, in_col, return = "Both") {
   if (return == "Both"){
     defaultW <- getOption("warn")
     options(warn = -1)
-    dat |> separate({{in_col}}, into = c("Value", "StdErr"))
+    dat |> separate({{in_col}}, into = c("Value", "StdErr"), convert = TRUE)
   } else if (return == "Value") {
     defaultW <- getOption("warn")
     options(warn = -1)
-    sep <- dat |> separate({{in_col}}, into = c("Value", "StdErr"))
+    sep <- dat |> separate({{in_col}}, into = c("Value", "StdErr"), convert = TRUE)
     options(warn = defaultW)
-    sep$Value <- as.numeric(sep$Value)
-    sep$StdErr <- as.numeric(sep$StdErr)
     return(sep$Value)
   } else if (return == "StdErr") {
     defaultW <- getOption("warn")
     options(warn = -1)
-    sep <- dat |> separate({{in_col}}, into = c("Value", "StdErr"))
+    sep <- dat |> separate({{in_col}}, into = c("Value", "StdErr"), convert = TRUE)
     options(warn = defaultW)
-    sep$Value <- as.numeric(sep$Value)
-    sep$StdErr <- as.numeric(sep$StdErr)
     return(sep$StdErr)
   } else {
     return("Must be Both, Value, or StdErr")
@@ -77,11 +81,11 @@ sep.coords <- function(dat, in_col, return = "LatLon") {
   if (return == "LatLon"){
     defaultW <- getOption("warn")
     options(warn = -1)
-    dat |> separate({{in_col}}, into = c("Lat", "Lon"), sep = "\\/|\\,") #Separate can only handle one argument. Use regex to do the job
+    dat |> separate({{in_col}}, into = c("Lat", "Lon"), sep = "\\/|\\,", convert = TRUE) #Separate can only handle one argument. Use regex to do the job
   } else if (return == "Lat") {
     defaultW <- getOption("warn")
     options(warn = -1)
-    sep <- dat |> separate({{in_col}}, into = c("Lat", "Lon"), sep = "\\/|\\,")
+    sep <- dat |> separate({{in_col}}, into = c("Lat", "Lon"), sep = "\\/|\\,", convert = TRUE)
     options(warn = defaultW)
     sep$Lat <- as.numeric(sep$Lat)
     sep$Lon <- as.numeric(sep$Lon)
@@ -89,10 +93,8 @@ sep.coords <- function(dat, in_col, return = "LatLon") {
   } else if (return == "Lon") {
     defaultW <- getOption("warn")
     options(warn = -1)
-    sep <- dat |> separate({{in_col}}, into = c("Lat", "Lon"), sep = "\\/|\\,")
+    sep <- dat |> separate({{in_col}}, into = c("Lat", "Lon"), sep = "\\/|\\,", convert = TRUE)
     options(warn = defaultW)
-    sep$Lat <- as.numeric(sep$Lat)
-    sep$Lon <- as.numeric(sep$Lon)
     return(sep$Lon)
   } else {
     return("Must be LatLon, Lat, or Lon")
@@ -101,9 +103,11 @@ sep.coords <- function(dat, in_col, return = "LatLon") {
 
 x <- data.frame("latlon" =
                   c("43.5/-67.9",
-                    "43.5,-67.9"))
-sep.coords(x, in_col = "latlon")
-
+                    "43.5,-67.9",
+                    "43.5, -67.9",
+                    "43.5 /-67.9"))
+dat <- sep.coords(x, in_col = "latlon")
+str(dat)
 
 
 
