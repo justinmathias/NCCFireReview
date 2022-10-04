@@ -3,9 +3,8 @@
 
 #Housekeeping: load packages, set themes, etc.
 library("easypackages")
-libraries(c("terra", "tidyverse", "ggsci", "ggthemes", "RColorBrewer", "measurements", "stringr", "rayshader", "egg", "rgdal"))
+libraries(c("terra", "tidyverse", "ggsci", "ggthemes", "RColorBrewer", "measurements", "stringr", "rayshader", "egg", "rgdal", "openxlsx"))
 theme_set(theme_clean(base_size = 13)) #Set ggplot2 theme
-
 
 # Carbon density ----------------------------------------------------------
 #First, extract data for each biome using Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
@@ -76,33 +75,28 @@ belowground <- cbind(belowground, over(coords.sp, biomes)$BIOME_NAME)
 names(belowground)[names(belowground) == "over(coords.sp, biomes)$BIOME_NAME"] <- "Biome"
 
 ####Map of belowground papers----
-#Figure 1a, Create map of study locations, circle size is number of trees#
 ggplot() + #Plot
-  borders("world", colour = "gray40", fill = "gray95") +
-  theme_few() +
+  borders("world", colour = "gray40", fill = "gray99") +
+  theme_article() +
   coord_fixed(1.2) +
   geom_point(aes(x = Lon, y = Lat, color = Biome),
              data = belowground,
-             # color = 'blue',
-             alpha = 0.65) +
+             alpha = 0.65,
+             size = 2) +
   scale_size_continuous(range = c(1, 8),
                         breaks = c(5, 10, 15)) +
-  labs(size = '# Trees') +
-  theme(legend.title = element_text(size = 11, family = "Arial"),
+  theme(legend.position = "bottom",
+        legend.title = element_text(size = 11, family = "Arial"),
         legend.text = element_text(size = 11, family = "Arial"),
         legend.background=element_blank(),
-        axis.title.x = element_text(color = "black", size = 17, family = "Arial"), #x-axis title (Year)
-        axis.title.y = element_text(color = "black", size = 17, family = "Arial"), #y-axis title (iWUE)
+        axis.title.x = element_text(color = "black", size = 17, family = "Arial"),
+        axis.title.y = element_text(color = "black", size = 17, family = "Arial"),
         axis.text = element_text(color = "black", size = 16, family = "Arial"),
         panel.border = element_rect(colour = "black", fill=NA, size=.9),
         plot.tag = element_text(family = "Arial", size = 18, face = "bold")) +
-  # scale_color_npg() +
-  # scale_color_manual(values = c("#8491B4FF","#FFB154FF", "#B09C85FF", "#E64B35FF","#00A087FF","#3C5488FF","#4DBBD5FF","#91D1C2FF","#DC0000FF","#7E6148FF")) +
   xlab("Longitude") +
-  ylab("Latitude") #+
-  guides(color = FALSE)
-# guides(color = guide_legend(override.aes = list(size=7))) #This creates legend component for LeafType by color: red=BD, aqua=BE, teal=ND, blue=NE.
-# Fig.1a
-#Figure 1b#
+  ylab("Latitude") +
+  guides(color = guide_legend(override.aes = list(size=3, alpha = 0.8), ncol = 2))
+
 
 
