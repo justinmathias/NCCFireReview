@@ -3,7 +3,7 @@
 
 #Housekeeping: load packages, set themes, etc.
 library("easypackages")
-libraries(c("terra", "tidyverse", "ggsci", "ggthemes", "RColorBrewer", "measurements", "stringr", "rayshader", "egg"))
+libraries(c("terra", "tidyverse", "ggsci", "ggthemes", "RColorBrewer", "measurements", "stringr", "rayshader", "egg", "rgdal"))
 theme_set(theme_clean(base_size = 13)) #Set ggplot2 theme
 
 
@@ -56,18 +56,29 @@ belowground <- read.xlsx("/Users/justinmathias/Downloads/LitSearch_Revised_Final
                          startRow = 3)
 colnames(belowground)
 #Create unique columns for Latitude and Longitude
-belowground |>
-  select(LatLon) |> #Select LatLon column
-  drop_na() |> #Remove NA values
+belowground <- belowground |>
+  drop_na(LatLon) |> #Remove NA values only for LatLon column
   group_by(LatLon) |> #Group by unique LatLon and only include one record per site
   filter(row_number() == 1) |>
-  sep.coords(LatLon) |>
-  print(n = 150)
+  sep.coords(LatLon)
+
+##Belowground map of study locations----
+biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
+
+#Create a new dataframe, coords, so we can extract data from the CRU dataset for each year
+coords <- data.frame(belowground$Lon, extract.coords$Lat)
+coords.sp <- SpatialPoints(coords) #Coords need to be LongLat
+proj4string(coords.sp) = proj4string(biomes) #Need to make sure coordinates match.
+#Extract biome information.
+belowground <- cbind(belowground, over(coords.sp, biomes)$BIOME_NAME)
+#Rename biome column
+names(belowground)[names(belowground) == "over(coords.sp, biomes)$BIOME_NAME"] <- "Biome"
+
+
 
 
 
 ####FIGURE 1####
-#Figure 1a, Create map of study locations, circle size is number of trees#
 #Figure 1a, Create map of study locations, circle size is number of trees#
 meta.map <- meta.CRU %>% #Create dataframe with only have value for lon/lat per LeafType per Site per Study
   group_by(Citation, Site, Biome) %>%
