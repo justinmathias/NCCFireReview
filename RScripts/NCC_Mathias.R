@@ -3,7 +3,7 @@
 
 #Housekeeping: load packages, set themes, etc.
 library("easypackages")
-libraries(c("terra", "tidyverse", "ggsci", "ggthemes", "RColorBrewer", "measurements", "stringr", "rayshader", "egg", "rgdal", "openxlsx"))
+libraries(c("terra", "tidyverse", "ggsci", "ggthemes", "RColorBrewer", "measurements", "stringr", "rayshader", "egg", "rgdal", "openxlsx", "shiny", "shinydashboard"))
 theme_set(theme_clean(base_size = 13)) #Set ggplot2 theme
 
 # Carbon density ----------------------------------------------------------
@@ -97,6 +97,21 @@ ggplot() + #Plot
   xlab("Longitude") +
   ylab("Latitude") +
   guides(color = guide_legend(override.aes = list(size=3, alpha = 0.8), ncol = 2))
+
+
+#NCCapp.R: Shiny app for the NCC Review----
+ui <- dashboardPage(
+  dashboardHeader(title = "Nature Climate Change Review",
+                  titleWidth = 325),#Width in pixels
+  dashboardSidebar(width = 325),
+  dashboardBody(),
+  skin = "green"
+)
+
+server <- function(input, output) { }
+shinyApp(ui, server)
+
+
 
 
 
