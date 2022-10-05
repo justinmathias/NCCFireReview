@@ -55,7 +55,7 @@ belowground <- read.xlsx("/Users/justinmathias/Downloads/LitSearch_Revised_Final
                          startRow = 3)
 colnames(belowground)
 #Create unique columns for Latitude and Longitude
-belowground <- belowground |>
+bmap <- belowground |>
   drop_na(LatLon) |> #Remove NA values only for LatLon column
   select(LatLon) |>
   group_by(LatLon) |> #Group by unique LatLon and only include one record per site
@@ -66,21 +66,21 @@ belowground <- belowground |>
 biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
 
 #Create a new dataframe, coords, so we can extract data from the CRU dataset for each year
-coords <- data.frame(belowground$Lon, belowground$Lat)
+coords <- data.frame(bmap$Lon, bmap$Lat)
 coords.sp <- SpatialPoints(coords) #Coords need to be LongLat
 proj4string(coords.sp) = proj4string(biomes) #Need to make sure coordinates match.
 #Extract biome information.
-belowground <- cbind(belowground, over(coords.sp, biomes)$BIOME_NAME)
+bmap <- cbind(bmap, over(coords.sp, biomes)$BIOME_NAME)
 #Rename biome column
-names(belowground)[names(belowground) == "over(coords.sp, biomes)$BIOME_NAME"] <- "Biome"
+names(bmap)[names(bmap) == "over(coords.sp, biomes)$BIOME_NAME"] <- "Biome"
 
-####Map of belowground papers----
+####Map of bmap papers----
 ggplot() + #Plot
   borders("world", colour = "gray40", fill = "gray99") +
   theme_article() +
   coord_fixed(1.2) +
   geom_point(aes(x = Lon, y = Lat, color = Biome),
-             data = belowground,
+             data = bmap,
              alpha = 0.65,
              size = 2) +
   scale_size_continuous(range = c(1, 8),
