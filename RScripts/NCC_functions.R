@@ -4,7 +4,7 @@
 
 #First, load all packages
 library("easypackages")
-libraries(c("tidyverse", "openxlsx", "measurements"))
+libraries(c("tidyverse", "openxlsx", "measurements", "stringi"))
 
 
 # Functions added by justin ----------------------------------------------------------
@@ -41,8 +41,7 @@ coord.convert <- function(coord, fn){
   }
 
 #Tests
-coord.convert("21 35 45", "dms.to.dd")
-coord.convert("21 35 45", "dm.to.dd") #Should throw an error
+coord.convert("21 35 45", "dms.to.dd") #It works!
 
 
 #Parsing out data (works for parentheses and plus/minus)----
@@ -107,8 +106,55 @@ x <- data.frame("latlon" =
                     "43.5, -67.9",
                     "43.5 /-67.9"))
 dat <- sep.coords(x, in_col = "latlon")
-str(dat)
+dat #It works!
 
 
 
+# Dealing with units ------------------------------------------------------
+#We will rely on the 'measurements' package to do the heavy lifting
+
+
+convertSoilC <- function(val, from, to) {
+  if (grepl("C", from) == TRUE) { #If the units are already in terms of carbon, then do simple conversion
+  from1 <- stri_replace_all_regex(from,
+                                  pattern=c('C', '_per_'), #Values to remove
+                                  replacement=c('', ' / '), #Values to replace with
+                                  vectorize=FALSE)
+  to1 <- stri_replace_all_regex(to,
+                                  pattern=c('_per_'), #Values to remove
+                                  replacement=c(' / '), #Values to replace with
+                                  vectorize=FALSE)
+  out <- conv_multiunit(val, from1, to1) #Use function from measurements package for conversion
+  out
+  } else {
+    val1 <- val #NEED TO PUT MODIFIER HERE
+    from1 <- stri_replace_all_regex(from, #Otherwise
+                                    pattern=c('C', '_per_'), #Values to remove
+                                    replacement=c('', ' / '), #Values to replace with
+                                    vectorize=FALSE)
+    to1 <- stri_replace_all_regex(to,
+                                  pattern=c('_per_'), #Values to remove
+                                  replacement=c(' / '), #Values to replace with
+                                  vectorize=FALSE)
+    out <- conv_multiunit(val1, from1, to1) #Use function from measurements package for conversion
+    out
+  }
+}
+
+
+
+convertSoilC(1, "kgC_per_m2", "g_per_m2")
+
+
+
+stri_replace_all_regex(input,
+                       pattern=c('C', '_per_'), #Values to remove
+                       replacement=c('', ' / '), #Values to replace with
+                       vectorize=FALSE)
+
+
+gsub('C','',"g_per_m2") #This
+grepl("C", )
+
+"gC_per_m2"
 

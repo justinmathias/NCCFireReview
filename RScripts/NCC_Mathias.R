@@ -113,5 +113,30 @@ shinyApp(ui, server)
 
 
 
+# Summary stats -----------------------------------------------------------
 
+sums <- belowground |> select(12:29)
+colnames(sums)
+str(sums)
+sums$O_lyr <- as.numeric(sums$O_lyr)
+sums$Mineral <- as.numeric(sums$Mineral)
+sums$SoilC <- as.numeric(sums$SoilC)
 
+sum(sums$Litter.c, na.rm = T)/416
+sum(sums$O_Mineral_Combo, na.rm = T)/416
+sum(sums$O_lyr, na.rm = T)/416
+sum(sums$Mineral, na.rm = T)/416
+sum(sums$BurnDepth, na.rm = T)/416
+sum(sums$SoilC, na.rm = T)/416
+sum(sums$SoilN, na.rm = T)/416
+sum(sums$pyC_char_ash, na.rm = T)/416
+sum(sums$Rs_Rh_Ra_CH4, na.rm = T)/416
+sum(sums$C02mic_BasalResp, na.rm = T)/416
+sum(sums$CUEmic, na.rm = T)/416
+sum(sums$MBC, na.rm = T)/416
+sum(sums$DOC, na.rm = T)/416
+sum(sums$Microbial_comp, na.rm = T)/416
+sum(sums$RootN, na.rm = T)/416
+sum(sums$RootC, na.rm = T)/416
+sum(sums$BD, na.rm = T)/416
+sum(sums$MRT, na.rm = T)/416
