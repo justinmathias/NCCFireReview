@@ -86,8 +86,6 @@ sep.coords <- function(dat, in_col, return = "LatLon") {
     options(warn = -1)
     sep <- dat |> separate({{in_col}}, into = c("Lat", "Lon"), sep = "\\/|\\,", convert = TRUE)
     options(warn = defaultW)
-    sep$Lat <- as.numeric(sep$Lat)
-    sep$Lon <- as.numeric(sep$Lon)
     return(sep$Lat)
   } else if (return == "Lon") {
     defaultW <- getOption("warn")
@@ -115,6 +113,7 @@ dat #It works!
 
 
 convertSoilC <- function(val, from, to) {
+  #We want all units to be in terms of carbon
   if (grepl("C", from) == TRUE) { #If the units are already in terms of carbon, then do simple conversion
   from1 <- stri_replace_all_regex(from,
                                   pattern=c('C', '_per_'), #Values to remove

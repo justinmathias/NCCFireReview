@@ -3,7 +3,8 @@
 
 #Housekeeping: load packages, set themes, etc.
 library("easypackages")
-libraries(c("terra", "tidyverse", "ggsci", "ggthemes", "RColorBrewer", "measurements", "stringr", "rayshader", "egg", "rgdal", "openxlsx", "shiny", "shinydashboard"))
+libraries(c("terra", "tidyverse", "ggsci", "ggthemes", "RColorBrewer", "measurements", "stringr", "rayshader", "egg", "rgdal", "openxlsx", "shiny", "shinydashboard",
+            "plotly"))
 theme_set(theme_clean(base_size = 13)) #Set ggplot2 theme
 
 # Carbon density ----------------------------------------------------------
@@ -61,7 +62,7 @@ bmap <- belowground |>
   group_by(LatLon) |> #Group by unique LatLon and only include one record per site
   filter(row_number() == 1) |>
   sep.coords(LatLon)
-
+str(bmap)
 ##Belowground map of study locations----
 biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
 
@@ -99,12 +100,28 @@ ggplot() + #Plot
   guides(color = guide_legend(override.aes = list(size=3, alpha = 0.8), ncol = 2))
 
 
+
 #NCCapp.R: Shiny app for the NCC Review----
-ui <- dashboardPage(
+
+
+
+ui <- dashboardPage( #Begin UI. Include menu items and set appearance
   dashboardHeader(title = "Nature Climate Change Review",
                   titleWidth = 325),#Width in pixels
-  dashboardSidebar(width = 325),
-  dashboardBody(),
+  dashboardSidebar(width = 325,
+                   sidebarMenu(
+                     menuItem("Map Overview", tabName = "map"),
+                     menuItem("Aboveground", tabName = "above"),
+                     menuItem("Belowground", tabName = "below"),
+                     menuItem("Modeling", tabName = "model"),
+                     menuItem("Emissions", tabName = "emissions"),
+                     menuItem("Total Carbon Dynamics", tabName = "Cdynamics"),
+                     menuItem("Policy Implications", tabName = "policy")
+
+                   )),
+  dashboardBody(#Begin dashboard body.
+
+  ),
   skin = "green"
 )
 
@@ -114,29 +131,6 @@ shinyApp(ui, server)
 
 
 # Summary stats -----------------------------------------------------------
+bstats <- belowground |> select(12:29)
+str(bstats)
 
-sums <- belowground |> select(12:29)
-colnames(sums)
-str(sums)
-sums$O_lyr <- as.numeric(sums$O_lyr)
-sums$Mineral <- as.numeric(sums$Mineral)
-sums$SoilC <- as.numeric(sums$SoilC)
-
-sum(sums$Litter.c, na.rm = T)/416
-sum(sums$O_Mineral_Combo, na.rm = T)/416
-sum(sums$O_lyr, na.rm = T)/416
-sum(sums$Mineral, na.rm = T)/416
-sum(sums$BurnDepth, na.rm = T)/416
-sum(sums$SoilC, na.rm = T)/416
-sum(sums$SoilN, na.rm = T)/416
-sum(sums$pyC_char_ash, na.rm = T)/416
-sum(sums$Rs_Rh_Ra_CH4, na.rm = T)/416
-sum(sums$C02mic_BasalResp, na.rm = T)/416
-sum(sums$CUEmic, na.rm = T)/416
-sum(sums$MBC, na.rm = T)/416
-sum(sums$DOC, na.rm = T)/416
-sum(sums$Microbial_comp, na.rm = T)/416
-sum(sums$RootN, na.rm = T)/416
-sum(sums$RootC, na.rm = T)/416
-sum(sums$BD, na.rm = T)/416
-sum(sums$MRT, na.rm = T)/416
