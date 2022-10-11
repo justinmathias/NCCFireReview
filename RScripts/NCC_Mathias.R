@@ -50,19 +50,22 @@ BiomeCarbon <- list(AGB_MgC_Biomes, BGB_MgC_Biomes, area_Biomes) %>% reduce(left
 
 
 # Literature review datasheet metadata extraction -------------------------
-#Read files, starting with row three, where actual
-belowground <- read.xlsx("/Users/justinmathias/Downloads/LitSearch_Revised_Final_DataExtration_V1.xlsx",
+#Read files, starting with row three, where actual column headers are
+belowground <- read.xlsx("/Users/justinmathias/Downloads/Literature_Data_extraction_NCC_v2.xlsx",
                          sheet = "Belowground",
                          startRow = 3)
+
 colnames(belowground)
 #Create unique columns for Latitude and Longitude
 bmap <- belowground |>
   drop_na(LatLon) |> #Remove NA values only for LatLon column
-  select(LatLon) |>
+  select(LatLon, 12:29) |>
   group_by(LatLon) |> #Group by unique LatLon and only include one record per site
   filter(row_number() == 1) |>
   sep.coords(LatLon)
+bmap[] <- sapply(bmap, as.numeric) #Assign all columns as numeric
 str(bmap)
+
 ##Belowground map of study locations----
 biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
 
@@ -76,33 +79,53 @@ bmap <- cbind(bmap, over(coords.sp, biomes)$BIOME_NAME)
 names(bmap)[names(bmap) == "over(coords.sp, biomes)$BIOME_NAME"] <- "Biome"
 
 ####Map of bmap papers----
-ggplot() + #Plot
+bmap |>
+  ggplot() + #Plot
   borders("world", colour = "gray40", fill = "gray99") +
   theme_article() +
   coord_fixed(1.2) +
   geom_point(aes(x = Lon, y = Lat, color = Biome),
-             data = bmap,
              alpha = 0.65,
              size = 2) +
   scale_size_continuous(range = c(1, 8),
                         breaks = c(5, 10, 15)) +
-  theme(legend.position = "bottom",
-        legend.title = element_text(size = 11, family = "Arial"),
-        legend.text = element_text(size = 11, family = "Arial"),
-        legend.background=element_blank(),
-        axis.title.x = element_text(color = "black", size = 17, family = "Arial"),
-        axis.title.y = element_text(color = "black", size = 17, family = "Arial"),
-        axis.text = element_text(color = "black", size = 16, family = "Arial"),
-        panel.border = element_rect(colour = "black", fill=NA, size=.9),
-        plot.tag = element_text(family = "Arial", size = 18, face = "bold")) +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(size = 11, family = "Arial"),
+    legend.text = element_text(size = 11, family = "Arial"),
+    legend.background = element_blank(),
+    axis.title.x = element_text(
+      color = "black",
+      size = 17,
+      family = "Arial"
+    ),
+    axis.title.y = element_text(
+      color = "black",
+      size = 17,
+      family = "Arial"
+    ),
+    axis.text = element_text(
+      color = "black",
+      size = 16,
+      family = "Arial"
+    ),
+    panel.border = element_rect(
+      colour = "black",
+      fill = NA,
+      size = .9
+    ),
+    plot.tag = element_text(
+      family = "Arial",
+      size = 18,
+      face = "bold"
+    )
+  ) +
   xlab("Longitude") +
   ylab("Latitude") +
-  guides(color = guide_legend(override.aes = list(size=3, alpha = 0.8), ncol = 2))
-
+  guides(color = guide_legend(override.aes = list(size = 3, alpha = 0.8), ncol = 2))
 
 
 #NCCapp.R: Shiny app for the NCC Review----
-
 
 
 ui <- dashboardPage( #Begin UI. Include menu items and set appearance
@@ -131,6 +154,15 @@ shinyApp(ui, server)
 
 
 # Summary stats -----------------------------------------------------------
-bstats <- belowground |> select(12:29)
-str(bstats)
+bstats <- belowground |> select(12:29) #Select binary indexed columns for summary stats
+bstats[] <- sapply(bstats, as.numeric) #Assign all columns as numeric
+str(bstats) #Confirm numeric
+
+#Create quick function to deal with NA values in sum
+na.sum <- function(...) {
+  sum(..., na.rm = TRUE)
+}
+
+bstats |> is.na()
+
 

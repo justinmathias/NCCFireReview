@@ -142,18 +142,7 @@ convertSoilC <- function(val, from, to) {
 
 
 
-convertSoilC(1, "kgC_per_m2", "g_per_m2")
+convertSoilC(1, "kgC_per_m2", "g / m2")
 
 
-
-stri_replace_all_regex(input,
-                       pattern=c('C', '_per_'), #Values to remove
-                       replacement=c('', ' / '), #Values to replace with
-                       vectorize=FALSE)
-
-
-gsub('C','',"g_per_m2") #This
-grepl("C", )
-
-"gC_per_m2"
 
