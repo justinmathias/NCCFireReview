@@ -67,7 +67,7 @@ bmap[] <- sapply(bmap, as.numeric) #Assign all columns as numeric
 str(bmap)
 
 ##Belowground map of study locations----
-# biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
+biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
 
 #Create a new dataframe, coords, so we can extract data from the CRU dataset for each year
 coords <- data.frame(bmap$Lon, bmap$Lat)
@@ -88,7 +88,7 @@ bmap %>%
   coord_fixed(1.2) +
   geom_point(aes(x = Lon, y = Lat, color = Biome),
              alpha = 0.65,
-             size = 2) +
+             size = 3) +
   scale_size_continuous(range = c(1, 8),
                         breaks = c(5, 10, 15)) +
   theme(
@@ -191,14 +191,32 @@ unique(belowground$SoilC1_Depth_cm)
 
 soilCinclude <- c("kgC_per_m2", #For now, only include soils on area basis
                   "gC_per_m2",
-                  "MgC_per_ha",
+                  "MgC_per_hectare",
                   "mgC_per_cm2",
                   "gC_per_cm2",
-                  "kgC_per_ha",
-                  "mgC_per_ha",
+                  "kgC_per_hectare",
+                  "mgC_per_hectare",
                   "molC_per_m2")
-soilC %>%
+soilC <- belowground[,c(31,32,35,50)]
+
+soilC$SoilC1 <- as.numeric(soilC$SoilC1)
+soilC$SoilC1.1 <- as.numeric(soilC$SoilC1.1)
+soilC$SoilC1_Depth_cm <- as.numeric(soilC$SoilC1_Depth_cm)
+
+soilC <- soilC %>%
   dplyr::filter(SoilC_Units %in% soilCinclude) %>%
-  mutate()
+  rename(SoilC1_Control = SoilC1,
+         SoilC1_Burned = SoilC1.1) %>%
+  drop_na(SoilC1_Control, SoilC1_Burned, SoilC1_Depth_cm) %>%
+  mutate(rawDelta = SoilC1_Burned - SoilC1_Control)
+
+soilC$SoilC1_Delta <- mapply(convertSoilC, soilC$rawDelta, soilC$SoilC_Units, "Mg / hectare")
+
+soilC <- soilC %>%
+  mutate(SoilC1_Delta2 = scale.depth(SoilC1_Delta, SoilC1_Depth_cm))
+
+soilC %>%
+  ggplot(aes(x = SoilC1_Delta2)) +
+  geom_histogram()
 
 

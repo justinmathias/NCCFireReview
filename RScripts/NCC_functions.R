@@ -140,13 +140,13 @@ convertSoilC <- function(val, from, to) {
   }
 }
 
-convertSoilC(1, "kgC_per_m2", "g / m2")
+convertSoilC(1, "kg_per_m2", "g / m2")
 
 # Scaling soil C depth ------------------------------------------------------
 scale.depth <- function(inValue, inDepth_cm, outDepth_cm = 5) { #This function will linearly scale soil C content on an areas basis given depth. Defaults to 0-5cm output
   scaledValue <- inValue*(outDepth_cm/inDepth_cm)
   scaledValue
 }
-scale.depth(inValue = 5, inDepth_cm = 1, outDepth_cm = 5)
+scale.depth(inValue = 1, inDepth_cm = 10, outDepth_cm = 5)
 
 
