@@ -49,17 +49,17 @@ sep.data <- function(dat, in_col, return = "Both") {
   if (return == "Both"){
     defaultW <- getOption("warn")
     options(warn = -1)
-    dat |> separate({{in_col}}, into = c("Value", "StdErr"), convert = TRUE)
+    dat %>% separate({{in_col}}, into = c("Value", "StdErr"), convert = TRUE)
   } else if (return == "Value") {
     defaultW <- getOption("warn")
     options(warn = -1)
-    sep <- dat |> separate({{in_col}}, into = c("Value", "StdErr"), convert = TRUE)
+    sep <- dat %>% separate({{in_col}}, into = c("Value", "StdErr"), convert = TRUE)
     options(warn = defaultW)
     return(sep$Value)
   } else if (return == "StdErr") {
     defaultW <- getOption("warn")
     options(warn = -1)
-    sep <- dat |> separate({{in_col}}, into = c("Value", "StdErr"), convert = TRUE)
+    sep <- dat %>% separate({{in_col}}, into = c("Value", "StdErr"), convert = TRUE)
     options(warn = defaultW)
     return(sep$StdErr)
   } else {
@@ -80,17 +80,17 @@ sep.coords <- function(dat, in_col, return = "LatLon") {
   if (return == "LatLon"){
     defaultW <- getOption("warn")
     options(warn = -1)
-    dat |> separate({{in_col}}, into = c("Lat", "Lon"), sep = "\\/|\\,", convert = TRUE) #Separate can only handle one argument. Use regex to do the job
+    dat %>% separate({{in_col}}, into = c("Lat", "Lon"), sep = "\\/|\\,", convert = TRUE) #Separate can only handle one argument. Use regex to do the job
   } else if (return == "Lat") {
     defaultW <- getOption("warn")
     options(warn = -1)
-    sep <- dat |> separate({{in_col}}, into = c("Lat", "Lon"), sep = "\\/|\\,", convert = TRUE)
+    sep <- dat %>% separate({{in_col}}, into = c("Lat", "Lon"), sep = "\\/|\\,", convert = TRUE)
     options(warn = defaultW)
     return(sep$Lat)
   } else if (return == "Lon") {
     defaultW <- getOption("warn")
     options(warn = -1)
-    sep <- dat |> separate({{in_col}}, into = c("Lat", "Lon"), sep = "\\/|\\,", convert = TRUE)
+    sep <- dat %>% separate({{in_col}}, into = c("Lat", "Lon"), sep = "\\/|\\,", convert = TRUE)
     options(warn = defaultW)
     return(sep$Lon)
   } else {
@@ -140,9 +140,13 @@ convertSoilC <- function(val, from, to) {
   }
 }
 
-
-
 convertSoilC(1, "kgC_per_m2", "g / m2")
 
+# Scaling soil C depth ------------------------------------------------------
+scale.depth <- function(inValue, inDepth_cm, outDepth_cm = 5) { #This function will linearly scale soil C content on an areas basis given depth. Defaults to 0-5cm output
+  scaledValue <- inValue*(outDepth_cm/inDepth_cm)
+  scaledValue
+}
+scale.depth(inValue = 5, inDepth_cm = 1, outDepth_cm = 5)
 
 
