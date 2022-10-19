@@ -103,14 +103,12 @@ x <- data.frame("latlon" =
                     "43.5,-67.9",
                     "43.5, -67.9",
                     "43.5 /-67.9"))
-dat <- sep.coords(x, in_col = "latlon")
-dat #It works!
+sep.coords(x, in_col = "latlon") #It works!
 
 
 
 # Dealing with units ------------------------------------------------------
 #We will rely on the 'measurements' package to do the heavy lifting
-
 
 convertSoilC <- function(val, from, to) {
   #We want all units to be in terms of carbon
@@ -142,11 +140,61 @@ convertSoilC <- function(val, from, to) {
 
 convertSoilC(1, "kg_per_m2", "g / m2")
 
+
+
+convertTreeC <- function(val, from, to) {
+  #We want all units to be in terms of carbon
+  if (grepl("C", from) == TRUE) { #If the units are already in terms of carbon, then do simple conversion
+    from1 <- stri_replace_all_regex(from,
+                                    pattern=c('C', '_per_'), #Values to remove
+                                    replacement=c('', ' / '), #Values to replace with
+                                    vectorize=FALSE)
+    to1 <- stri_replace_all_regex(to,
+                                  pattern=c('_per_'), #Values to remove
+                                  replacement=c(' / '), #Values to replace with
+                                  vectorize=FALSE)
+    out <- conv_multiunit(val, from1, to1) #Use function from measurements package for conversion
+    out
+  } else {
+    val1 <- val*0.45
+    from1 <- stri_replace_all_regex(from, #Otherwise
+                                    pattern=c('C', '_per_'), #Values to remove
+                                    replacement=c('', ' / '), #Values to replace with
+                                    vectorize=FALSE)
+    to1 <- stri_replace_all_regex(to,
+                                  pattern=c('_per_'), #Values to remove
+                                  replacement=c(' / '), #Values to replace with
+                                  vectorize=FALSE)
+    out <- conv_multiunit(val1, from1, to1) #Use function from measurements package for conversion
+    out
+  }
+}
+
+convertTreeC(1, "kg_per_m2", "g / m2") #Converts to Carbon
+convertTreeC(1, "kgC_per_m2", "g / m2")
+
 # Scaling soil C depth ------------------------------------------------------
 scale.depth <- function(inValue, inDepth_cm, outDepth_cm = 5) { #This function will linearly scale soil C content on an areas basis given depth. Defaults to 0-5cm output
   scaledValue <- inValue*(outDepth_cm/inDepth_cm)
   scaledValue
 }
 scale.depth(inValue = 1, inDepth_cm = 10, outDepth_cm = 5)
+
+#Create function to deal with NA values in sum
+na.sum <- function(...) {
+  sum(..., na.rm = TRUE)
+}
+
+#Notes from meeting 10/19/22
+#soilgrids.org for scale.depth function
+#R package: https://rdrr.io/cran/soilDB/man/fetchSoilGrids.html
+#GFED assigned locations instead of biomes
+#https://lter.github.io/som-website/database.html
+#Think about backing out bulk density for the %C soil data
+
+
+
+
+
 
 

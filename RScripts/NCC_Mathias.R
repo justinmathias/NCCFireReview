@@ -81,7 +81,7 @@ names(bmap)[names(bmap) == "over(coords.sp, biomes)$BIOME_NAME"] <- "Biome"
 str(bmap)
 
 ####Map of bmap papers----
-bmap %>%
+ggplotly(bmap %>%
   ggplot() + #Plot
   borders("world", colour = "gray40", fill = "gray99") +
   theme_article() +
@@ -126,7 +126,7 @@ bmap %>%
   ylab("Latitude") +
   guides(color = guide_legend(override.aes = list(size = 3, alpha = 0.8), ncol = 2))
 
-
+)
 #NCCapp.R: Shiny app for the NCC Review----
 ui <- dashboardPage( #Begin UI. Include menu items and set appearance
   dashboardHeader(title = "Nature Climate Change Review",
@@ -157,15 +157,12 @@ bstats <- belowground %>% select(12:29) #Select binary indexed columns for summa
 bstats[] <- sapply(bstats, as.numeric) #Assign all columns as numeric
 str(bstats) #Confirm numeric
 
-#Create quick function to deal with NA values in sum
-na.sum <- function(...) {
-  sum(..., na.rm = TRUE)
-}
 
-bstats %>% is.na()
+
 
 #Density plot of time since fire
 belowground$TimeSinceFire_years <- as.numeric(belowground$TimeSinceFire_years)
+
 belowground %>%
   select(TimeSinceFire_years) %>%
   ggplot(aes(x = TimeSinceFire_years)) +
@@ -182,6 +179,13 @@ wordcloud(words = belowground$Region, min.freq = 1,
 wordcloud(words = belowground$Severity, min.freq = 1,
           max.words=200, random.order=FALSE,
           colors=brewer.pal(8, "Dark2"))
+wordcloud(words = belowground$CO2mic_text, min.freq = 1,
+          max.words=200, random.order=FALSE,
+          colors=brewer.pal(8, "Dark2"))
+wordcloud(words = belowground$Notes, min.freq = 1,
+          max.words=200, random.order=FALSE,
+          colors=brewer.pal(8, "Dark2"))
+
 
 # Soil carbon stocks ------------------------------------------------------
 
@@ -217,6 +221,7 @@ soilC <- soilC %>%
 
 soilC %>%
   ggplot(aes(x = SoilC1_Delta2)) +
-  geom_histogram()
+  geom_density() +
+  geom_vline(xintercept = 0, linetype = "dashed")
 
-
+mean(soilC$SoilC1_Delta2)
