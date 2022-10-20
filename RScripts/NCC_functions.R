@@ -109,7 +109,6 @@ sep.coords(x, in_col = "latlon") #It works!
 
 # Dealing with units ------------------------------------------------------
 #We will rely on the 'measurements' package to do the heavy lifting
-
 convertSoilC <- function(val, from, to) {
   #We want all units to be in terms of carbon
   if (grepl("molC", from) == TRUE) { #If units are in MOLES convert dimensions
@@ -156,19 +155,24 @@ convertSoilC <- function(val, from, to) {
 convertSoilC(1, "kg_per_m2", "g / m2")
 
 
-
-
-
-
-
-
-
-
-
-
 convertTreeC <- function(val, from, to) {
   #We want all units to be in terms of carbon
-  if (grepl("C", from) == TRUE) { #If the units are already in terms of carbon, then do simple conversion
+  if (grepl("molC", from) == TRUE) { #If units are in MOLES convert dimensions
+    from1 <- stri_replace_all_regex(from, #First remove the C and convert to moles
+                                    pattern=c('C', '_per_'), #Values to remove
+                                    replacement=c('', ' / '), #Values to replace with
+                                    vectorize=FALSE)
+    denominator <- sub('.*_per_', '', from) #Snag the denominator for unit conversion
+    molC <- conv_multiunit(x = val, from = from1, to = paste0("mol / ",denominator)) #Convert given units to molC
+    gC <- molC*12.01 #Convert moles of carbon to grams of carbon
+    to1 <- stri_replace_all_regex(to, #Define to units in correct format
+                                  pattern=c('_per_'), #Values to remove
+                                  replacement=c(' / '), #Values to replace with
+                                  vectorize=FALSE)
+    out <- conv_multiunit(gC, paste0("g / ",denominator), to1) #Use function from measurements package for conversion
+    out
+
+  } else if (grepl("C", from) == TRUE) { #If the units are already in terms of CARBON, then do simple conversion
     from1 <- stri_replace_all_regex(from,
                                     pattern=c('C', '_per_'), #Values to remove
                                     replacement=c('', ' / '), #Values to replace with
@@ -179,8 +183,8 @@ convertTreeC <- function(val, from, to) {
                                   vectorize=FALSE)
     out <- conv_multiunit(val, from1, to1) #Use function from measurements package for conversion
     out
-  } else {
-    val1 <- val*0.45
+  } else  {
+    val1 <- val*0.45 #NEED TO PUT MODIFIER HERE
     from1 <- stri_replace_all_regex(from, #Otherwise
                                     pattern=c('C', '_per_'), #Values to remove
                                     replacement=c('', ' / '), #Values to replace with
@@ -194,8 +198,15 @@ convertTreeC <- function(val, from, to) {
   }
 }
 
-convertTreeC(1, "kg_per_m2", "g / m2") #Converts to Carbon
-convertTreeC(1, "kgC_per_m2", "g / m2")
+
+
+
+
+
+
+
+
+
 
 # Scaling soil C depth ------------------------------------------------------
 scale.depth <- function(inValue, inDepth_cm, outDepth_cm = 5) { #This function will linearly scale soil C content on an areas basis given depth. Defaults to 0-5cm output
