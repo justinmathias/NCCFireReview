@@ -112,18 +112,33 @@ sep.coords(x, in_col = "latlon") #It works!
 
 convertSoilC <- function(val, from, to) {
   #We want all units to be in terms of carbon
-  if (grepl("C", from) == TRUE) { #If the units are already in terms of carbon, then do simple conversion
-  from1 <- stri_replace_all_regex(from,
-                                  pattern=c('C', '_per_'), #Values to remove
-                                  replacement=c('', ' / '), #Values to replace with
-                                  vectorize=FALSE)
-  to1 <- stri_replace_all_regex(to,
+  if (grepl("molC", from) == TRUE) { #If units are in MOLES convert dimensions
+    from1 <- stri_replace_all_regex(from, #First remove the C and convert to moles
+                                    pattern=c('C', '_per_'), #Values to remove
+                                    replacement=c('', ' / '), #Values to replace with
+                                    vectorize=FALSE)
+    denominator <- sub('.*_per_', '', from) #Snag the denominator for unit conversion
+    molC <- conv_multiunit(x = val, from = from1, to = paste0("mol / ",denominator)) #Convert given units to molC
+    gC <- molC*12.01 #Convert moles of carbon to grams of carbon
+    to1 <- stri_replace_all_regex(to, #Define to units in correct format
                                   pattern=c('_per_'), #Values to remove
                                   replacement=c(' / '), #Values to replace with
                                   vectorize=FALSE)
-  out <- conv_multiunit(val, from1, to1) #Use function from measurements package for conversion
-  out
-  } else {
+    out <- conv_multiunit(gC, paste0("g / ",denominator), to1) #Use function from measurements package for conversion
+    out
+
+  } else if (grepl("C", from) == TRUE) { #If the units are already in terms of CARBON, then do simple conversion
+    from1 <- stri_replace_all_regex(from,
+                                    pattern=c('C', '_per_'), #Values to remove
+                                    replacement=c('', ' / '), #Values to replace with
+                                    vectorize=FALSE)
+    to1 <- stri_replace_all_regex(to,
+                                  pattern=c('_per_'), #Values to remove
+                                  replacement=c(' / '), #Values to replace with
+                                  vectorize=FALSE)
+    out <- conv_multiunit(val, from1, to1) #Use function from measurements package for conversion
+    out
+  } else  {
     val1 <- val #NEED TO PUT MODIFIER HERE
     from1 <- stri_replace_all_regex(from, #Otherwise
                                     pattern=c('C', '_per_'), #Values to remove
@@ -139,6 +154,15 @@ convertSoilC <- function(val, from, to) {
 }
 
 convertSoilC(1, "kg_per_m2", "g / m2")
+
+
+
+
+
+
+
+
+
 
 
 
