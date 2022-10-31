@@ -199,13 +199,16 @@ convertTreeC <- function(val, from, to) {
 }
 
 
-
-
-
-
-
-
-
+# Calculate organic carbon stock from SoilGrids database ------------------
+#Uses data returned from fetchSoilGrids using the soilDB package
+calc_ocs <- function(ocd, hzdept, hzdepb) {
+  #ocd is organic carbon density from SoilGrids.org in units hg/m^3.
+  #hzdept is the soil horizon top depth in cm
+  #hzdepb is the soil horizon bottom depth in cm
+  #Output organic carbon stocks in MgC ha-1 for the depth layer provided
+  out <- ocd*0.0001*(hzdepb-hzdept)/0.0001
+  out
+}
 
 
 # Scaling soil C depth ------------------------------------------------------

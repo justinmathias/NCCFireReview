@@ -4,7 +4,7 @@
 #Housekeeping: load packages, set themes, etc.
 library("easypackages")
 libraries(c("terra", "ggsci", "ggthemes", "RColorBrewer", "measurements", "stringr", "rayshader", "egg", "rgdal", "openxlsx", "shiny", "shinydashboard",
-            "plotly", "wordcloud", "tm", "tidyverse"))
+            "plotly", "wordcloud", "tm", "tidyverse", "soilDB", "aqp"))
 theme_set(theme_clean(base_size = 13)) #Set ggplot2 theme
 
 # Carbon density ----------------------------------------------------------
@@ -67,7 +67,7 @@ bmap[] <- sapply(bmap, as.numeric) #Assign all columns as numeric
 str(bmap)
 
 ##Belowground map of study locations----
-biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
+# biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
 
 #Create a new dataframe, coords, so we can extract data from the CRU dataset for each year
 coords <- data.frame(bmap$Lon, bmap$Lat)
@@ -188,6 +188,11 @@ wordcloud(words = belowground$Notes, min.freq = 1,
 
 
 # Soil carbon stocks ------------------------------------------------------
+belowground <- belowground %>% mutate(UniqueID = paste(RecordID, RecordSubID, sep = "_")) #Create new UniqueID column for indexing
+
+
+
+
 
 #What units are given?
 unique(belowground$SoilC_Units)
