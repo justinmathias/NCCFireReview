@@ -201,14 +201,19 @@ convertTreeC <- function(val, from, to) {
 
 # Calculate organic carbon stock from SoilGrids database ------------------
 #Uses data returned from fetchSoilGrids using the soilDB package
-calc_ocs <- function(ocd, hzdept, hzdepb) {
-  #ocd is organic carbon density from SoilGrids.org in units hg/m^3.
+calc_soilC <- function(bdod, soc, hzdept, hzdepb) {
+  #bdod: Bulk density of the fine earth fraction in cg/cm^3, need to convert to g/cm^3 first.
+  #soc: Soil organic content in the fine earth fraction in dg/kg, need to convert to g/g first.
+  bdod1 <- bdod*0.01 #g soil per cubic cm
+  soc1 <- soc*0.1/1000 #g C per g soil
+  ocd <- bdod1*soc1 #organic carbon density, g C per cubic cm
   #hzdept is the soil horizon top depth in cm
   #hzdepb is the soil horizon bottom depth in cm
-  #Output organic carbon stocks in MgC ha-1 for the depth layer provided
-  out <- ocd*0.0001*(hzdepb-hzdept)/0.0001
+  #Output organic carbon stocks in MgC per ha for the depth layer provided
+  out <- ocd*0.000001*(hzdepb-hzdept)*0.00000001 #MgC per
   out
 }
+
 
 
 # Scaling soil C depth ------------------------------------------------------
