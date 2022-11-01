@@ -51,7 +51,7 @@ BiomeCarbon <- list(AGB_MgC_Biomes, BGB_MgC_Biomes, area_Biomes) %>% reduce(left
 
 # Literature review datasheet metadata extraction -------------------------
 #Read files, starting with row three, where actual column headers are
-belowground <- read.xlsx("/Users/justinmathias/Downloads/Literature_Data_extraction_NCC_v2.xlsx",
+belowground <- read.xlsx("/Users/justinmathias/Downloads/Literature_Data_extraction_NCC_v3.xlsx",
                          sheet = "Belowground",
                          startRow = 3)
 
@@ -188,7 +188,32 @@ wordcloud(words = belowground$Notes, min.freq = 1,
 
 
 # Soil carbon stocks ------------------------------------------------------
-belowground <- belowground %>% mutate(UniqueID = paste(RecordID, RecordSubID, sep = "_")) #Create new UniqueID column for indexing
+##Fetch and wrangle soil C data from soilgrids.org----
+soils <- belowground %>% mutate(UniqueID = paste(RecordID, RecordSubID, sep = "_")) %>%  #Create UniqueID for records
+  drop_na(LatLon) %>% #Drop NA values
+  sep.coords(LatLon) %>% #Create columns for Lat and Lon
+  group_by(UniqueID) %>% #Group by UniqueID to remove duplicate rows
+  filter(row_number() == 1) #Remove duplicate ID rows
+
+soilsFetched <-  try(fetchSoilGrids(data.frame(id = soils$UniqueID, #Download soils data for each lat/lon
+                                               lat = soils$Lat,
+                                               lon = soils$Lon), progress = TRUE))
+soilsData <- soilsFetched@horizons #Extract soils data from SoilProfileCollection
+
+#Wrangle soils data into format appropriate to scale C with depth
+soilsFinal <- soilsData %>% mutate(soilOrgC_MgC_per_ha = calc_soilC(bdodmean, socmean, hzdept, hzdepb), #Calculate C content for each soil layer by area
+                                   soilOrgC_MgC_per_ha_per_cmdepth = soilOrgC_MgC_per_ha/(hzdepb - hzdept)) %>%  #Standardize by depth profile
+  group_by(id) %>% #Group by ID to create sums within groups.
+  mutate(TotalC = sum(soilOrgC_MgC_per_ha), #Get sum of soilOrgC for proportion
+         TotalC_depth = sum(soilOrgC_MgC_per_ha_per_cmdepth)) %>% #Get sum of soilOrgC for proportion
+  ungroup() %>%
+  select(label, id, hzdept, soilOrgC_MgC_per_ha, soilOrgC_MgC_per_ha_per_cmdepth, TotalC, TotalC_depth) %>% #Select only columns of interest
+  mutate(PropC_depth = soilOrgC_MgC_per_ha_per_cmdepth/TotalC_depth) #Calculate proportion of C in each depth layer
+
+
+
+
+
 
 
 
