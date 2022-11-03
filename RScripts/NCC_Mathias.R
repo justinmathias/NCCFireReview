@@ -69,7 +69,7 @@ str(bmap)
 ##Belowground map of study locations----
 biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
 
-#Create a new dataframe, coords, so we can extract data from the CRU dataset for each year
+#Create a new dataframe, coords, so we can extract data from bmap
 coords <- data.frame(bmap$Lon, bmap$Lat)
 coords.sp <- SpatialPoints(coords) #Coords need to be LongLat
 proj4string(coords.sp) = proj4string(biomes) #Need to make sure coordinates match.
@@ -226,8 +226,19 @@ soilsLocations <- belowground %>%
 #Join dataframes to get locations for soilC
 soilsCarbon <- left_join(soilsFinal, soilsLocations)
 
+#Create a new dataframe, soilscoords, so we can extract data from the CRU dataset for each year
+soilscoords <- data.frame(soilsCarbon$Lon, soilsCarbon$Lat)
+soilscoords.sp <- SpatialPoints(soilscoords) #Coords need to be LongLat
+proj4string(soilscoords.sp) = proj4string(biomes) #Need to make sure coordinates match.
+#Extract biome information.
+soilsCarbon <- cbind(soilsCarbon, over(soilscoords.sp, biomes)$BIOME_NAME)
+#Rename biome column
+names(soilsCarbon)[names(soilsCarbon) == "over(soilscoords.sp, biomes)$BIOME_NAME"] <- "Biome"
+
+str(soilsCarbon)
 
 
+which(is.na(soilsCarbon$Lat))
 
 
 
