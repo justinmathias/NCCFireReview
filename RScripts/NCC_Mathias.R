@@ -4,7 +4,7 @@
 #Housekeeping: load packages, set themes, etc.
 library("easypackages")
 libraries(c("terra", "ggsci", "ggthemes", "RColorBrewer", "measurements", "stringr", "rayshader", "egg", "rgdal", "openxlsx", "shiny", "shinydashboard",
-            "plotly", "wordcloud", "tm", "tidyverse", "soilDB", "aqp"))
+            "plotly", "wordcloud", "tm", "soilDB", "aqp", "rhdf5", "tidyverse"))
 theme_set(theme_clean(base_size = 13)) #Set ggplot2 theme
 
 # Carbon density ----------------------------------------------------------
@@ -67,7 +67,7 @@ bmap[] <- sapply(bmap, as.numeric) #Assign all columns as numeric
 str(bmap)
 
 ##Belowground map of study locations----
-# biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
+biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
 
 #Create a new dataframe, coords, so we can extract data from the CRU dataset for each year
 coords <- data.frame(bmap$Lon, bmap$Lat)
@@ -189,26 +189,49 @@ wordcloud(words = belowground$Notes, min.freq = 1,
 
 # Soil carbon stocks ------------------------------------------------------
 ##Fetch and wrangle soil C data from soilgrids.org----
-soils <- belowground %>% mutate(UniqueID = paste(RecordID, RecordSubID, sep = "_")) %>%  #Create UniqueID for records
-  drop_na(LatLon) %>% #Drop NA values
-  sep.coords(LatLon) %>% #Create columns for Lat and Lon
+# soils <- belowground %>% mutate(UniqueID = paste(RecordID, RecordSubID, sep = "_")) %>%  #Create UniqueID for records
+#   drop_na(LatLon) %>% #Drop NA values
+#   sep.coords(LatLon) %>% #Create columns for Lat and Lon
+#   group_by(UniqueID) %>% #Group by UniqueID to remove duplicate rows
+#   filter(row_number() == 1) #Remove duplicate ID rows
+#
+# soilsFetched <-  try(fetchSoilGrids(data.frame(id = soils$UniqueID, #Download soils data for each lat/lon
+#                                                lat = soils$Lat,
+#                                                lon = soils$Lon), progress = TRUE))
+# soilsData <- soilsFetched@horizons #Extract soils data from SoilProfileCollection
+#
+# #Wrangle soils data into format appropriate to scale C with depth
+# soilsFinal <- soilsData %>% mutate(soilOrgC_MgC_per_ha = calc_soilC(bdodmean, socmean, hzdept, hzdepb), #Calculate C content for each soil layer by area
+#                                    soilOrgC_MgC_per_ha_per_cmdepth = soilOrgC_MgC_per_ha/(hzdepb - hzdept)) %>%  #Standardize by depth profile
+#   group_by(id) %>% #Group by ID to create sums within groups.
+#   mutate(TotalC = sum(soilOrgC_MgC_per_ha), #Get sum of soilOrgC for proportion
+#          TotalC_depth = sum(soilOrgC_MgC_per_ha_per_cmdepth)) %>% #Get sum of soilOrgC for proportion
+#   ungroup() %>%
+#   select(label, id, hzdept, soilOrgC_MgC_per_ha, soilOrgC_MgC_per_ha_per_cmdepth, TotalC, TotalC_depth) %>% #Select only columns of interest
+#   mutate(PropC_depth = soilOrgC_MgC_per_ha_per_cmdepth/TotalC_depth) #Calculate proportion of C in each depth layer
+
+#Import soil C data from soilgrids.org
+soilsFinal <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/soilsFinal.xlsx")
+
+#Create dataframe containing UniqueIDs and Lat/Lon to get get biome information
+soilsLocations <- belowground %>%
+  mutate(UniqueID = paste(RecordID, RecordSubID, sep = "_")) %>%
+  drop_na(LatLon) %>%
   group_by(UniqueID) %>% #Group by UniqueID to remove duplicate rows
-  filter(row_number() == 1) #Remove duplicate ID rows
-
-soilsFetched <-  try(fetchSoilGrids(data.frame(id = soils$UniqueID, #Download soils data for each lat/lon
-                                               lat = soils$Lat,
-                                               lon = soils$Lon), progress = TRUE))
-soilsData <- soilsFetched@horizons #Extract soils data from SoilProfileCollection
-
-#Wrangle soils data into format appropriate to scale C with depth
-soilsFinal <- soilsData %>% mutate(soilOrgC_MgC_per_ha = calc_soilC(bdodmean, socmean, hzdept, hzdepb), #Calculate C content for each soil layer by area
-                                   soilOrgC_MgC_per_ha_per_cmdepth = soilOrgC_MgC_per_ha/(hzdepb - hzdept)) %>%  #Standardize by depth profile
-  group_by(id) %>% #Group by ID to create sums within groups.
-  mutate(TotalC = sum(soilOrgC_MgC_per_ha), #Get sum of soilOrgC for proportion
-         TotalC_depth = sum(soilOrgC_MgC_per_ha_per_cmdepth)) %>% #Get sum of soilOrgC for proportion
+  filter(row_number() == 1) %>%  #Remove duplicate ID rows
   ungroup() %>%
-  select(label, id, hzdept, soilOrgC_MgC_per_ha, soilOrgC_MgC_per_ha_per_cmdepth, TotalC, TotalC_depth) %>% #Select only columns of interest
-  mutate(PropC_depth = soilOrgC_MgC_per_ha_per_cmdepth/TotalC_depth) #Calculate proportion of C in each depth layer
+  sep.coords(LatLon) %>%
+  select(UniqueID, Lat, Lon)
+
+#Join dataframes to get locations for soilC
+soilsCarbon <- left_join(soilsFinal, soilsLocations)
+
+
+
+
+
+
+
 
 
 
