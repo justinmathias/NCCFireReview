@@ -127,6 +127,7 @@ ggplotly(bmap %>%
   guides(color = guide_legend(override.aes = list(size = 3, alpha = 0.8), ncol = 2))
 
 )
+
 #NCCapp.R: Shiny app for the NCC Review----
 ui <- dashboardPage( #Begin UI. Include menu items and set appearance
   dashboardHeader(title = "Nature Climate Change Review",
@@ -235,20 +236,7 @@ soilsCarbon <- cbind(soilsCarbon, over(soilscoords.sp, biomes)$BIOME_NAME)
 #Rename biome column
 names(soilsCarbon)[names(soilsCarbon) == "over(soilscoords.sp, biomes)$BIOME_NAME"] <- "Biome"
 
-str(soilsCarbon)
-
-
-which(is.na(soilsCarbon$Lat))
-
-
-
-
-
-
-
-
-
-
+#
 
 
 
@@ -257,22 +245,61 @@ which(is.na(soilsCarbon$Lat))
 unique(belowground$SoilC_Units)
 unique(belowground$SoilC1_Depth_cm)
 
-soilCinclude <- c("kgC_per_m2", #For now, only include soils on area basis
+soilCareainclude <- c("kgC_per_m2", #For these, only include mass soil per area basis
                   "gC_per_m2",
                   "MgC_per_hectare",
                   "mgC_per_cm2",
                   "gC_per_cm2",
                   "kgC_per_hectare",
                   "mgC_per_hectare",
+                  "Mg_per_hectare",
                   "molC_per_m2")
-soilC <- belowground[,c(31,32,35,50)]
+soilCmassinclude <- c("percent", #For these, only include mass soil per area basis
+               "gC_per_kg",
+               "gC_per_g",
+               "mgC_per_g",
+               "mgC_per_kg",
+               "mgC_per_g",
+               "g_per_kg",
+               "g_per_g",
+               "mg_per_g")
+
+#Workup soilC on area basis
+soilCarea <- belowground %>% filter(SoilC_Units_Control_StockData %in% soilCareainclude)
+soilCmass <- belowground %>% filter(SoilC_Units_Control_StockData %in% soilCmassinclude)
+
+soilCarea %>% #Work with soil C on area basis
+  drop_na(SoilC1_Depth_cm_Control_StockData, SoilC1_Control_StockData, SoilC1_Burned1_StockData) %>% #Drop rows where NA exists (i.e. no data)
+  mutate(SoilC1_Control_StockData = sep.data(., in_col = SoilC1_Control_StockData, return = "Value"), #Use custom function to return numeric values
+         SoilC1_Burned1_StockData = sep.data(., in_col = SoilC1_Burned1_StockData, return = "Value")) %>% #Use custom function to return numeric values
+  select(SoilC1_Control_StockData, SoilC1_Burned1_StockData)
+
+
+  sep.data(SoilC1_Control_StockData) %>% select(Value, StdErr)
+
+
+
+
+select(SoilC_Units_Control_StockData,
+                       SoilC1_Depth_cm_Control_StockData,
+                       SoilC1_Control_StockData,
+                       SoilC1_Burned1_StockData)
+soilC %>% separate(SoilC1_Control_StockData, into = c("a","b"))
+
+# #Assign value columns as numeric
+# soilC$SoilC1_Depth_cm_Control_StockData <- as.numeric(soilC$SoilC1_Depth_cm_Control_StockData)
+soilC$SoilC1_Control_StockData <- as.numeric(soilC$SoilC1_Control_StockData)
+
+soilC %>% filter(SoilC_Units_Control_StockData %in% soilCareainclude) %>% #Filter only soilC on area basis
+  drop_na(SoilC1_Depth_cm_Control_StockData, SoilC1_Control_StockData, SoilC1_Burned1_StockData)
+
 
 soilC$SoilC1 <- as.numeric(soilC$SoilC1)
 soilC$SoilC1.1 <- as.numeric(soilC$SoilC1.1)
 soilC$SoilC1_Depth_cm <- as.numeric(soilC$SoilC1_Depth_cm)
 
 soilC <- soilC %>%
-  dplyr::filter(SoilC_Units %in% soilCinclude) %>%
+  dplyr::filter(SoilC_Units %in% soilCarea) %>%
   rename(SoilC1_Control = SoilC1,
          SoilC1_Burned = SoilC1.1) %>%
   drop_na(SoilC1_Control, SoilC1_Burned, SoilC1_Depth_cm) %>%
