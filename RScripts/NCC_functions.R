@@ -45,7 +45,7 @@ coord.convert("21 35 45", "dms.to.dd") #It works!
 
 
 #Parsing out data (works for parentheses and plus/minus)----
-sep.data <- function(dat, in_col, return = "Both") {
+sep.data <- function(dat, in_col, return = "Value") {
   if (return == "Both"){
     defaultW <- getOption("warn")
     options(warn = -1)
