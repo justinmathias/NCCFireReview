@@ -222,10 +222,18 @@ scale.depth <- function(inValue, inDepth_cm, outDepth_cm = 5) { #This function w
 }
 scale.depth(inValue = 1, inDepth_cm = 10, outDepth_cm = 5)
 
-#Create function to deal with NA values in sum
+# Create function to deal with NA values in sum ------------------------------------------------------
 na.sum <- function(...) {
   sum(..., na.rm = TRUE)
 }
+
+# Percent change ------------------------------------------------------
+percentchange<-function(FinalValue,InitialValue){
+  (FinalValue-InitialValue)/InitialValue*100
+}
+
+
+
 
 #Notes from meeting 10/19/22
 #soilgrids.org for scale.depth function

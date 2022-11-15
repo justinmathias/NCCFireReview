@@ -55,7 +55,6 @@ belowground <- read.xlsx("/Users/justinmathias/Downloads/Literature_Data_extract
                          sheet = "Belowground",
                          startRow = 3)
 
-colnames(belowground)
 #Create unique columns for Latitude and Longitude
 bmap <- belowground %>%
   drop_na(LatLon) %>% #Remove NA values only for LatLon column
@@ -211,7 +210,7 @@ wordcloud(words = belowground$Notes, min.freq = 1,
 #   select(label, id, hzdept, soilOrgC_MgC_per_ha, soilOrgC_MgC_per_ha_per_cmdepth, TotalC, TotalC_depth) %>% #Select only columns of interest
 #   mutate(PropC_depth = soilOrgC_MgC_per_ha_per_cmdepth/TotalC_depth) #Calculate proportion of C in each depth layer
 
-#Import soil C data from soilgrids.org
+#Import soil C data retrieved from soilgrids.org
 soilsFinal <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/soilsFinal.xlsx")
 
 #Create dataframe containing UniqueIDs and Lat/Lon to get get biome information
@@ -227,7 +226,7 @@ soilsLocations <- belowground %>%
 #Join dataframes to get locations for soilC
 soilsCarbon <- left_join(soilsFinal, soilsLocations)
 
-#Create a new dataframe, soilscoords, so we can extract data from the CRU dataset for each year
+#Create a new dataframe, soilscoords, so we can extract data from the soilsCarbon dataset for each year
 soilscoords <- data.frame(soilsCarbon$Lon, soilsCarbon$Lat)
 soilscoords.sp <- SpatialPoints(soilscoords) #Coords need to be LongLat
 proj4string(soilscoords.sp) = proj4string(biomes) #Need to make sure coordinates match.
@@ -236,83 +235,73 @@ soilsCarbon <- cbind(soilsCarbon, over(soilscoords.sp, biomes)$BIOME_NAME)
 #Rename biome column
 names(soilsCarbon)[names(soilsCarbon) == "over(soilscoords.sp, biomes)$BIOME_NAME"] <- "Biome"
 
-#
-
-
-
-
 #What units are given?
 unique(belowground$SoilC_Units)
 unique(belowground$SoilC1_Depth_cm)
 
-soilCareainclude <- c("kgC_per_m2", #For these, only include mass soil per area basis
-                  "gC_per_m2",
-                  "MgC_per_hectare",
-                  "mgC_per_cm2",
-                  "gC_per_cm2",
-                  "kgC_per_hectare",
-                  "mgC_per_hectare",
-                  "Mg_per_hectare",
-                  "molC_per_m2")
-soilCmassinclude <- c("percent", #For these, only include mass soil per area basis
-               "gC_per_kg",
-               "gC_per_g",
-               "mgC_per_g",
-               "mgC_per_kg",
-               "mgC_per_g",
-               "g_per_kg",
-               "g_per_g",
-               "mg_per_g")
+##Workup soilC on area basis----
+soilCareainclude <-
+  c( #For these, only include mass soil per area basis
+    "kgC_per_m2",
+    "gC_per_m2",
+    "MgC_per_hectare",
+    "mgC_per_cm2",
+    "gC_per_cm2",
+    "kgC_per_hectare",
+    "mgC_per_hectare",
+    "Mg_per_hectare",
+    "molC_per_m2"
+  )
 
-#Workup soilC on area basis
 soilCarea <- belowground %>% filter(SoilC_Units_Control_StockData %in% soilCareainclude)
-soilCmass <- belowground %>% filter(SoilC_Units_Control_StockData %in% soilCmassinclude)
+soilCarea <- soilCarea %>%
+  mutate(
+    UniqueID = paste0(RecordID, "_", RecordSubID),
+    SoilC1_Depth_cm_Control_StockData = as.numeric(SoilC1_Depth_cm_Control_StockData)
+  ) %>%
+  drop_na(SoilC1_Depth_cm_Control_StockData)
 
+#SoilCarea <-
 soilCarea %>% #Work with soil C on area basis
-  drop_na(SoilC1_Depth_cm_Control_StockData, SoilC1_Control_StockData, SoilC1_Burned1_StockData) %>% #Drop rows where NA exists (i.e. no data)
-  mutate(SoilC1_Control_StockData = sep.data(., in_col = SoilC1_Control_StockData, return = "Value"), #Use custom function to return numeric values
-         SoilC1_Burned1_StockData = sep.data(., in_col = SoilC1_Burned1_StockData, return = "Value")) %>% #Use custom function to return numeric values
-  select(SoilC1_Control_StockData, SoilC1_Burned1_StockData)
+  drop_na( #Drop rows where NA exists (i.e. no data)
+    SoilC1_Depth_cm_Control_StockData,
+    SoilC1_Control_StockData,
+    SoilC1_Burned1_StockData
+  ) %>%
+  mutate( #Extract value from all records. Records generally given
+    SoilC1_Control_StockData = sep.data(., in_col = SoilC1_Control_StockData, return = "Value"), #Use custom function to return numeric values
+    SoilC1_Burned1_StockData = sep.data(., in_col = SoilC1_Burned1_StockData, return = "Value"), #Use custom function to return numeric values
+  ) %>%
+  dplyr::select(
+    UniqueID,
+    SoilC_Units_Control_StockData,
+    SoilC1_Depth_cm_Control_StockData,
+    SoilC1_Control_StockData,
+    SoilC1_Burned1_StockData
+  ) %>%
+  mutate( #Convert soilC stocks to MgC_per_ha
+    SoilC1_Control_StockData_MgC_ha = unlist(pmap(list(SoilC1_Control_StockData, SoilC_Units_Control_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
+    SoilC1_Burned1_StockData_MgC_ha = unlist(pmap(list(SoilC1_Burned1_StockData, SoilC_Units_Control_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
+    SoilC1_Delta = (SoilC1_Burned1_StockData_MgC_ha - SoilC1_Control_StockData_MgC_ha), #Negative means carbon lost
+    SoilC1_Delta2 = scale.depth(SoilC1_Delta, SoilC1_Depth_cm_Control_StockData), #NEED TO UPDATE DEPTH SCALING FUNCTION
+    SoilC1_percentChange = percentchange(SoilC1_Burned1_StockData_MgC_ha, SoilC1_Control_StockData_MgC_ha)
+  )
+
+##Workup soilC on area basis----
+
+soilCmassinclude <-
+  c( #For these, only include mass soil per area basis
+    "percent",
+    "gC_per_kg",
+    "gC_per_g",
+    "mgC_per_g",
+    "mgC_per_kg",
+    "mgC_per_g",
+    "g_per_kg",
+    "g_per_g",
+    "mg_per_g"
+  )
 
 
-  sep.data(SoilC1_Control_StockData) %>% select(Value, StdErr)
 
 
-
-
-select(SoilC_Units_Control_StockData,
-                       SoilC1_Depth_cm_Control_StockData,
-                       SoilC1_Control_StockData,
-                       SoilC1_Burned1_StockData)
-soilC %>% separate(SoilC1_Control_StockData, into = c("a","b"))
-
-# #Assign value columns as numeric
-# soilC$SoilC1_Depth_cm_Control_StockData <- as.numeric(soilC$SoilC1_Depth_cm_Control_StockData)
-soilC$SoilC1_Control_StockData <- as.numeric(soilC$SoilC1_Control_StockData)
-
-soilC %>% filter(SoilC_Units_Control_StockData %in% soilCareainclude) %>% #Filter only soilC on area basis
-  drop_na(SoilC1_Depth_cm_Control_StockData, SoilC1_Control_StockData, SoilC1_Burned1_StockData)
-
-
-soilC$SoilC1 <- as.numeric(soilC$SoilC1)
-soilC$SoilC1.1 <- as.numeric(soilC$SoilC1.1)
-soilC$SoilC1_Depth_cm <- as.numeric(soilC$SoilC1_Depth_cm)
-
-soilC <- soilC %>%
-  dplyr::filter(SoilC_Units %in% soilCarea) %>%
-  rename(SoilC1_Control = SoilC1,
-         SoilC1_Burned = SoilC1.1) %>%
-  drop_na(SoilC1_Control, SoilC1_Burned, SoilC1_Depth_cm) %>%
-  mutate(rawDelta = SoilC1_Burned - SoilC1_Control)
-
-soilC$SoilC1_Delta <- mapply(convertSoilC, soilC$rawDelta, soilC$SoilC_Units, "Mg / hectare")
-
-soilC <- soilC %>%
-  mutate(SoilC1_Delta2 = scale.depth(SoilC1_Delta, SoilC1_Depth_cm))
-
-soilC %>%
-  ggplot(aes(x = SoilC1_Delta2)) +
-  geom_density() +
-  geom_vline(xintercept = 0, linetype = "dashed")
-
-mean(soilC$SoilC1_Delta2)
