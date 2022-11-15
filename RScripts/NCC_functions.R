@@ -49,18 +49,23 @@ sep.data <- function(dat, in_col, return = "Value") {
   if (return == "Both"){
     defaultW <- getOption("warn")
     options(warn = -1)
-    dat %>% separate({{in_col}}, into = c("Value", "StdErr"), sep = "\\(|\\±|\\)", convert = TRUE)
+    sep <- dat %>% separate({{in_col}}, into = c("Value", "StdErr"), sep = "\\(|\\±|\\)", convert = TRUE)
+    sep$Value <- as.numeric(sep$Value)
+    sep$StdErr <- as.numeric(sep$StdErr)
+    return(sep)
   } else if (return == "Value") {
     defaultW <- getOption("warn")
     options(warn = -1)
     sep <- dat %>% separate({{in_col}}, into = c("Value", "StdErr"), sep = "\\(|\\±|\\)", convert = TRUE)
     options(warn = defaultW)
+    sep$Value <- as.numeric(sep$Value)
     return(sep$Value)
   } else if (return == "StdErr") {
     defaultW <- getOption("warn")
     options(warn = -1)
     sep <- dat %>% separate({{in_col}}, into = c("Value", "StdErr"), sep = "\\(|\\±|\\)", convert = TRUE)
     options(warn = defaultW)
+    sep$StdErr <- as.numeric(sep$StdErr)
     return(sep$StdErr)
   } else {
     return("Must be Both, Value, or StdErr")
