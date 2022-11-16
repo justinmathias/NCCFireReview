@@ -222,7 +222,12 @@ calc_soilC <- function(bdod, soc, hzdept, hzdepb) {
 
 # Scaling soil C depth ------------------------------------------------------
 scale.depth <- function(inValue, inDepth_cm, outDepth_cm = 5) { #This function will linearly scale soil C content on an areas basis given depth. Defaults to 0-5cm output
-  scaledValue <- inValue*(outDepth_cm/inDepth_cm)
+  c <- 0.275595 #Fit via a three parameter asymptotic regression model
+  d <- 0.966278
+  e <- 29.836626
+  y1 <- c + (d-c)*(1-exp(-inDepth_cm/e))
+  y2 <- c + (d-c)*(1-exp(-outDepth_cm/e))
+  scaledValue <- inValue*(y2/y1)
   scaledValue
 }
 scale.depth(inValue = 1, inDepth_cm = 10, outDepth_cm = 5)
