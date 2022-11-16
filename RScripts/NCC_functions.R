@@ -222,7 +222,7 @@ calc_soilC <- function(bdod, soc, hzdept, hzdepb) {
 
 # Scaling soil C depth ------------------------------------------------------
 scale.depth <- function(inValue, inDepth_cm, outDepth_cm = 5) { #This function will linearly scale soil C content on an areas basis given depth. Defaults to 0-5cm output
-  c <- 0.275595 #Fit via a three parameter asymptotic regression model
+  c <- 0.275595 #Fit via a three parameter asymptotic regression model "AR.3()" using drc R package
   d <- 0.966278
   e <- 29.836626
   y1 <- c + (d-c)*(1-exp(-inDepth_cm/e))
@@ -230,7 +230,6 @@ scale.depth <- function(inValue, inDepth_cm, outDepth_cm = 5) { #This function w
   scaledValue <- inValue*(y2/y1)
   scaledValue
 }
-scale.depth(inValue = 1, inDepth_cm = 10, outDepth_cm = 5)
 
 # Create function to deal with NA values in sum ------------------------------------------------------
 na.sum <- function(...) {
@@ -243,14 +242,6 @@ percentchange<-function(FinalValue,InitialValue){
 }
 
 
-
-
-#Notes from meeting 10/19/22
-#soilgrids.org for scale.depth function
-#R package: https://rdrr.io/cran/soilDB/man/fetchSoilGrids.html
-#GFED assigned locations instead of biomes
-#https://lter.github.io/som-website/database.html
-#Think about backing out bulk density for the %C soil data
 
 
 
