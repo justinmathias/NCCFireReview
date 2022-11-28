@@ -4,7 +4,7 @@
 
 #First, load all packages
 library("easypackages")
-libraries(c("tidyverse", "openxlsx", "measurements", "stringi"))
+libraries(c("openxlsx", "measurements", "stringi", "tidyverse"))
 
 
 # Functions added by justin ----------------------------------------------------------

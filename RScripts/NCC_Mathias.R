@@ -79,53 +79,82 @@ names(bmap)[names(bmap) == "over(coords.sp, biomes)$BIOME_NAME"] <- "Biome"
 
 str(bmap)
 
+###Map of binary information for data included in belowground----
+bmap_long <- bmap %>%
+  pivot_longer(names_to = "Measurement", values_to = "Binary", -c(Lat,Lon)) %>%
+  separate(Measurement, c("Measurement"), sep = "_Binary_Measurements") #Drop the "_Binary_Measurements" text
+
+x <- paste0("SoilC")
+ggplotly(
+  bmap_long %>% filter(Measurement == x & Binary == 1) %>%
+    ggplot() + #Plot
+    borders("world", colour = "gray40", fill = "gray99") +
+    theme_article() +
+    coord_fixed(1.2) +
+    geom_point(
+      aes(x = Lon, y = Lat),
+      size = 1.5,
+      color = "blue"
+    ) +
+    scale_size_continuous(range = c(1, 8),
+                          breaks = c(5, 10, 15)
+    ) +
+    ggtitle(x)
+)
+
+
+
+
+
 ####Map of bmap papers----
 ggplotly(bmap %>%
-  ggplot() + #Plot
-  borders("world", colour = "gray40", fill = "gray99") +
-  theme_article() +
-  coord_fixed(1.2) +
-  geom_point(aes(x = Lon, y = Lat, color = Biome),
-             alpha = 0.65,
-             size = 3) +
-  scale_size_continuous(range = c(1, 8),
-                        breaks = c(5, 10, 15)) +
-  theme(
-    legend.position = "bottom",
-    legend.title = element_text(size = 11, family = "Arial"),
-    legend.text = element_text(size = 11, family = "Arial"),
-    legend.background = element_blank(),
-    axis.title.x = element_text(
-      color = "black",
-      size = 17,
-      family = "Arial"
-    ),
-    axis.title.y = element_text(
-      color = "black",
-      size = 17,
-      family = "Arial"
-    ),
-    axis.text = element_text(
-      color = "black",
-      size = 16,
-      family = "Arial"
-    ),
-    panel.border = element_rect(
-      colour = "black",
-      fill = NA,
-      size = .9
-    ),
-    plot.tag = element_text(
-      family = "Arial",
-      size = 18,
-      face = "bold"
-    )
-  ) +
-  xlab("Longitude") +
-  ylab("Latitude") +
-  guides(color = guide_legend(override.aes = list(size = 3, alpha = 0.8), ncol = 2))
+           ggplot() + #Plot
+           borders("world", colour = "gray40", fill = "gray99") +
+           theme_article() +
+           coord_fixed(1.2) +
+           geom_point(aes(x = Lon, y = Lat, color = Biome),
+                      alpha = 0.65,
+                      size = 1.5) +
+           scale_size_continuous(range = c(1, 8),
+                                 breaks = c(5, 10, 15)) +
+           theme(
+             legend.position = "bottom",
+             legend.title = element_text(size = 11, family = "Arial"),
+             legend.text = element_text(size = 11, family = "Arial"),
+             legend.background = element_blank(),
+             axis.title.x = element_text(
+               color = "black",
+               size = 17,
+               family = "Arial"
+             ),
+             axis.title.y = element_text(
+               color = "black",
+               size = 17,
+               family = "Arial"
+             ),
+             axis.text = element_text(
+               color = "black",
+               size = 16,
+               family = "Arial"
+             ),
+             panel.border = element_rect(
+               colour = "black",
+               fill = NA,
+               size = .9
+             ),
+             plot.tag = element_text(
+               family = "Arial",
+               size = 18,
+               face = "bold"
+             )
+           ) +
+           xlab("Longitude") +
+           ylab("Latitude") +
+           ggtit
 
 )
+
+
 
 #NCCapp.R: Shiny app for the NCC Review----
 ui <- dashboardPage( #Begin UI. Include menu items and set appearance
@@ -157,9 +186,6 @@ bstats <- belowground %>% select(12:29) #Select binary indexed columns for summa
 bstats[] <- sapply(bstats, as.numeric) #Assign all columns as numeric
 str(bstats) #Confirm numeric
 
-
-
-
 #Density plot of time since fire
 belowground$TimeSinceFire_years <- as.numeric(belowground$TimeSinceFire_years)
 
@@ -188,7 +214,7 @@ wordcloud(words = belowground$Notes, min.freq = 1,
 
 
 # Soil carbon stocks ------------------------------------------------------
-##Fetch and wrangle soil C data from soilgrids.org----
+##Fetch and wrangle soil C data from soilgrids.org to scale soil C with depth----
 # soils <- belowground %>% mutate(UniqueID = paste(RecordID, RecordSubID, sep = "_")) %>%  #Create UniqueID for records
 #   drop_na(LatLon) %>% #Drop NA values
 #   sep.coords(LatLon) %>% #Create columns for Lat and Lon
@@ -226,7 +252,7 @@ soilsLocations <- belowground %>%
 #Join dataframes to get locations for soilC
 soilsCarbon <- left_join(soilsFinal, soilsLocations)
 
-#Create a new dataframe, soilscoords, so we can extract data from the soilsCarbon dataset for each year
+#Create a new dataframe, soilscoords, so we can extract data from the soilsCarbon dataset
 soilscoords <- data.frame(soilsCarbon$Lon, soilsCarbon$Lat)
 soilscoords.sp <- SpatialPoints(soilscoords) #Coords need to be LongLat
 proj4string(soilscoords.sp) = proj4string(biomes) #Need to make sure coordinates match.
@@ -234,74 +260,4 @@ proj4string(soilscoords.sp) = proj4string(biomes) #Need to make sure coordinates
 soilsCarbon <- cbind(soilsCarbon, over(soilscoords.sp, biomes)$BIOME_NAME)
 #Rename biome column
 names(soilsCarbon)[names(soilsCarbon) == "over(soilscoords.sp, biomes)$BIOME_NAME"] <- "Biome"
-
-#What units are given?
-unique(belowground$SoilC_Units)
-unique(belowground$SoilC1_Depth_cm)
-
-##Workup soilC on area basis----
-soilCareainclude <-
-  c( #For these, only include mass soil per area basis
-    "kgC_per_m2",
-    "gC_per_m2",
-    "MgC_per_hectare",
-    "mgC_per_cm2",
-    "gC_per_cm2",
-    "kgC_per_hectare",
-    "mgC_per_hectare",
-    "Mg_per_hectare",
-    "molC_per_m2"
-  )
-
-soilCarea <- belowground %>% filter(SoilC_Units_Control_StockData %in% soilCareainclude)
-soilCarea <- soilCarea %>%
-  mutate(
-    UniqueID = paste0(RecordID, "_", RecordSubID),
-    SoilC1_Depth_cm_Control_StockData = as.numeric(SoilC1_Depth_cm_Control_StockData)
-  ) %>%
-  drop_na(SoilC1_Depth_cm_Control_StockData)
-
-#SoilCarea <-
-soilCarea %>% #Work with soil C on area basis
-  drop_na( #Drop rows where NA exists (i.e. no data)
-    SoilC1_Depth_cm_Control_StockData,
-    SoilC1_Control_StockData,
-    SoilC1_Burned1_StockData
-  ) %>%
-  mutate( #Extract value from all records. Records generally given
-    SoilC1_Control_StockData = sep.data(., in_col = SoilC1_Control_StockData, return = "Value"), #Use custom function to return numeric values
-    SoilC1_Burned1_StockData = sep.data(., in_col = SoilC1_Burned1_StockData, return = "Value"), #Use custom function to return numeric values
-  ) %>%
-  dplyr::select(
-    UniqueID,
-    SoilC_Units_Control_StockData,
-    SoilC1_Depth_cm_Control_StockData,
-    SoilC1_Control_StockData,
-    SoilC1_Burned1_StockData
-  ) %>%
-  mutate( #Convert soilC stocks to MgC_per_ha
-    SoilC1_Control_StockData_MgC_ha = unlist(pmap(list(SoilC1_Control_StockData, SoilC_Units_Control_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
-    SoilC1_Burned1_StockData_MgC_ha = unlist(pmap(list(SoilC1_Burned1_StockData, SoilC_Units_Control_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
-    SoilC1_Delta = (SoilC1_Burned1_StockData_MgC_ha - SoilC1_Control_StockData_MgC_ha), #Negative means carbon lost
-    SoilC1_Delta2 = scale.depth(SoilC1_Delta, SoilC1_Depth_cm_Control_StockData), #NEED TO UPDATE DEPTH SCALING FUNCTION
-    SoilC1_percentChange = percentchange(SoilC1_Burned1_StockData_MgC_ha, SoilC1_Control_StockData_MgC_ha)
-  )
-
-##Workup soilC on area basis----
-
-soilCmassinclude <-
-  c( #For these, only include mass soil per area basis
-    "percent",
-    "gC_per_kg",
-    "gC_per_g",
-    "mgC_per_g",
-    "mgC_per_kg",
-    "mgC_per_g",
-    "g_per_kg",
-    "g_per_g",
-    "mg_per_g"
-  )
-
-
-
 
