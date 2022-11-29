@@ -82,15 +82,32 @@ soilCmod <- drm(PropC_depth_cumu ~ LabelDepth, data = soilDat, fct = AR.3())
 summary(soilCmod)
 
 ##Figure for soilC by depth----
+
+inset <- soilsCarbon %>%
+  ggplot(aes(x = LabelDepth, y = PropC_depth)) +
+  geom_point(alpha = 0.05) +
+  stat_smooth(method = "gam", formula = y ~ s(x, k = 6), size = 0.7) +
+  coord_flip() +
+  xlim(c(150,0)) +
+  theme(legend.position = "none",
+        axis.text = element_text(color = "black", size = 0.5),
+        axis.title = element_text(size = 9)) +
+  xlab("Soil Depth (cm)") +
+  ylab("Non-Cumulative")
+
 #Create new data for smoother line
-soilDat %>% #Rename figure later
+main <- soilDat %>% #Rename figure later
   ggplot(aes(x = LabelDepth, y = PropC_depth_cumu)) +
   geom_point(size = 2) +
   geom_line(aes(y = predict(soilCmod)), color = "blue", size = 0.8) +
-  theme(legend.position = "none") +
+  theme(legend.position = "none",
+        axis.text = element_text(color = "black")) +
   xlab("Soil Depth (cm)") +
-  ylab("Cumulative Proportion \n of Soil Carbon")
-ggsave("SoilPlot.tiff", units = c("in"), width = 3.75, height = 2.75, dpi = 300)
+  ylab("Cumulative Proportion \n of Soil Carbon") +
+  coord_flip() +
+  xlim(c(150,0))
+main + inset_element(inset, 0.025, 0.025, 0.6, 0.65)
+ggsave("SoilPlot.tiff", units = c("in"), width = 3.9, height = 3.25, dpi = 300)
 
 
 #Begin analysis----
@@ -112,7 +129,7 @@ soilCareainclude <-
     "molC_per_m2"
   )
 
-soilCarea <- belowground %>% filter(SoilC_Units_Control_StockData %in% soilCareainclude) #Filter belowgrounds column to only include soilC on area basis
+soilCarea <- belowground %>% filter(SoilC_Units_Control_StockData %in% soilCareainclude) #Filter belowground tab to only include soilC on area basis
 soilCarea <- soilCarea %>%
   mutate(
     UniqueID = paste0(RecordID, "_", RecordSubID), #Create UniqueID based off of RecordID and RecordSubID
