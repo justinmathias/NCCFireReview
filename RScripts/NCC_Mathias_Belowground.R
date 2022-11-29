@@ -90,7 +90,7 @@ inset <- soilsCarbon %>%
   coord_flip() +
   xlim(c(150,0)) +
   theme(legend.position = "none",
-        axis.text = element_text(color = "black", size = 0.5),
+        axis.text = element_text(color = "black", size = 8),
         axis.title = element_text(size = 9)) +
   xlab("Soil Depth (cm)") +
   ylab("Non-Cumulative")
@@ -99,7 +99,7 @@ inset <- soilsCarbon %>%
 main <- soilDat %>% #Rename figure later
   ggplot(aes(x = LabelDepth, y = PropC_depth_cumu)) +
   geom_point(size = 2) +
-  geom_line(aes(y = predict(soilCmod)), color = "blue", size = 0.8) +
+  geom_line(aes(y = predict(soilCmod)), color = "forestgreen", size = 0.8) +
   theme(legend.position = "none",
         axis.text = element_text(color = "black")) +
   xlab("Soil Depth (cm)") +
