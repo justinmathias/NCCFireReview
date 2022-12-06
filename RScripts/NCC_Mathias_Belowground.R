@@ -7,14 +7,31 @@ libraries(c("terra", "ggsci", "ggthemes", "RColorBrewer", "measurements", "strin
             "plotly", "wordcloud", "tm", "soilDB", "aqp", "rhdf5", "drc", "tidyverse", "patchwork"))
 theme_set(theme_article(base_size = 13)) #Set ggplot2 theme
 
-#Read files, starting with row three, where actual column headers are ------------------------------------------------------
-belowground <- read.xlsx("/Users/justinmathias/Downloads/Literature_Data_extraction_NCC_v3.xlsx",
+#Read files, starting with row three on belowground sheet, where actual column headers are ------------------------------------------------------
+#Run this chunk of code to get biomes. We need to do it this way because we don't have a lat/lon for every case
+{belowground <- read.xlsx("/Users/justinmathias/Downloads/Literature_Data_extraction_NCC_v3.xlsx",
                          sheet = "Belowground",
                          startRow = 3)
 
-##Belowground map of study locations----
+##Read in biomes shapefile----
 biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
 
+##Append biome to each observation given lat/lon
+Belowground <- belowground %>%
+  mutate(UniqueID = paste(RecordID, RecordSubID, sep = "_")) %>% #First create UniqueID to join later
+  drop_na(LatLon) %>% sep.coords(LatLon) #First separate Latitude and Longitude
+
+#Create a new dataframe, coords, so we can extract data from belowground
+coords <- data.frame(Belowground$Lon, Belowground$Lat)
+coords.sp <- SpatialPoints(coords) #Coords need to be LongLat
+proj4string(coords.sp) = proj4string(biomes) #Need to make sure coordinates match.
+#Extract biome information.
+Belowground <- cbind(Belowground, over(coords.sp, biomes)$BIOME_NAME)
+#Rename biome column
+names(Belowground)[names(Belowground) == "over(coords.sp, biomes)$BIOME_NAME"] <- "Biome"
+
+belowground <- left_join(belowground, Belowground)
+}
 
 #Working with soil C data for scaling by depth ------------------------------------------------------
 ##Fetch and wrangle soil C data from soilgrids.org----
@@ -44,25 +61,10 @@ soilsFinal <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Na
 
 ##Create dataframe containing UniqueIDs and Lat/Lon to retrieve biome information----
 soilsLocations <- belowground %>%
-  mutate(UniqueID = paste(RecordID, RecordSubID, sep = "_")) %>%
-  drop_na(LatLon) %>%
-  group_by(UniqueID) %>% #Group by UniqueID to remove duplicate rows
-  filter(row_number() == 1) %>%  #Remove duplicate ID rows
-  ungroup() %>%
-  sep.coords(LatLon) %>%
-  dplyr::select(UniqueID, Lat, Lon)
+  dplyr::select(UniqueID, Lat, Lon, Biome)
 
 #Join dataframes to get locations for soilC
 soilsCarbon <- left_join(soilsFinal, soilsLocations)
-
-#Create a new dataframe, soilscoords, so we can extract data from the soilsCarbon dataset
-soilscoords <- data.frame(soilsCarbon$Lon, soilsCarbon$Lat)
-soilscoords.sp <- SpatialPoints(soilscoords) #Coords need to be LongLat
-proj4string(soilscoords.sp) = proj4string(biomes) #Need to make sure coordinates match.
-#Extract biome information.
-soilsCarbon <- cbind(soilsCarbon, over(soilscoords.sp, biomes)$BIOME_NAME)
-#Rename biome column
-names(soilsCarbon)[names(soilsCarbon) == "over(soilscoords.sp, biomes)$BIOME_NAME"] <- "Biome"
 
 ##Fit three parameter asymptotic regression model to soilC data----
 #Create a lookup table to replace depth labels with values
@@ -82,11 +84,10 @@ soilCmod <- drm(PropC_depth_cumu ~ LabelDepth, data = soilDat, fct = AR.3())
 summary(soilCmod)
 
 ##Figure for soilC by depth----
-
 inset <- soilsCarbon %>%
   ggplot(aes(x = LabelDepth, y = PropC_depth)) +
   geom_point(alpha = 0.05) +
-  stat_smooth(method = "gam", formula = y ~ s(x, k = 6), size = 0.7) +
+  stat_smooth(method = "gam", formula = y ~ s(x, k = 6), linewidth = 0.7) +
   coord_flip() +
   xlim(c(150,0)) +
   theme(legend.position = "none",
@@ -106,8 +107,8 @@ main <- soilDat %>% #Rename figure later
   ylab("Cumulative Proportion \n of Soil Carbon") +
   coord_flip() +
   xlim(c(150,0))
-main + inset_element(inset, 0.025, 0.025, 0.6, 0.65)
-ggsave("SoilPlot.tiff", units = c("in"), width = 3.9, height = 3.25, dpi = 300)
+main + inset_element(inset, 0.025, 0.025, 0.625, 0.675)
+ggsave("SoilPlot.jpg", units = c("in"), width = 3.9, height = 3.25, dpi = 300)
 
 
 #Begin analysis----
@@ -116,6 +117,7 @@ unique(belowground$SoilC_Units)
 unique(belowground$SoilC1_Depth_cm)
 
 ##Workup soilC on area basis----
+###Define units to include on area basis----
 soilCareainclude <-
   c( #For these, only include mass soil per area basis
     "kgC_per_m2",
@@ -129,6 +131,7 @@ soilCareainclude <-
     "molC_per_m2"
   )
 
+###Tidy data to create UniqueID and remove NA values
 soilCarea <- belowground %>% filter(SoilC_Units_Control_StockData %in% soilCareainclude) #Filter belowground tab to only include soilC on area basis
 soilCarea <- soilCarea %>%
   mutate(
@@ -137,31 +140,71 @@ soilCarea <- soilCarea %>%
   ) %>%
   drop_na(SoilC1_Depth_cm_Control_StockData) #Remove NA values
 
-#SoilCarea <-
-soilCarea %>% #Work with soil C on area basis
+###Scale given soil C stocks to 0-5cm depth
+SoilCarea <- soilCarea %>% #Work with soil C on area basis
   drop_na( #Drop rows where NA exists (i.e. no data) for the following columns
-    SoilC1_Depth_cm_Control_StockData,
-    SoilC1_Control_StockData,
-    SoilC1_Burned1_StockData
+    SoilC1_Depth_cm_Control_StockData
   ) %>%
-  mutate( #Extract value from all records. Records generally given
+  mutate( #Extract value from all records.
     SoilC1_Control_StockData = sep.data(., in_col = SoilC1_Control_StockData, return = "Value"), #Use custom function to return numeric values
     SoilC1_Burned1_StockData = sep.data(., in_col = SoilC1_Burned1_StockData, return = "Value"), #Use custom function to return numeric values
-  ) %>%
-  dplyr::select(
-    UniqueID,
-    SoilC_Units_Control_StockData,
-    SoilC1_Depth_cm_Control_StockData,
-    SoilC1_Control_StockData,
-    SoilC1_Burned1_StockData
   ) %>%
   mutate( #Convert soilC stocks to MgC_per_ha
     SoilC1_Control_StockData_MgC_ha = unlist(pmap(list(SoilC1_Control_StockData, SoilC_Units_Control_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
     SoilC1_Burned1_StockData_MgC_ha = unlist(pmap(list(SoilC1_Burned1_StockData, SoilC_Units_Control_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
-    SoilC1_Delta = (SoilC1_Burned1_StockData_MgC_ha - SoilC1_Control_StockData_MgC_ha), #Negative means carbon lost
-    SoilC1_Delta2 = scale.depth(SoilC1_Delta, SoilC1_Depth_cm_Control_StockData), #Scale based on proportion of C at depth
-    SoilC1_percentChange = percentchange(SoilC1_Burned1_StockData_MgC_ha, SoilC1_Control_StockData_MgC_ha)
-  ) %>%
+    SoilC1_Control_StockData_MgC_ha_scaled = scale.depth(SoilC1_Control_StockData_MgC_ha, SoilC1_Depth_cm_Control_StockData), #Scale based on proportion of C at depth
+    SoilC1_Burned1_StockData_MgC_ha_scaled = scale.depth(SoilC1_Burned1_StockData_MgC_ha, SoilC1_Depth_cm_Control_StockData), #Scale based on proportion of C at depth
+    SoilC1_Delta_MgC_ha_scaled = (SoilC1_Burned1_StockData_MgC_ha_scaled - SoilC1_Control_StockData_MgC_ha_scaled)
+  )
+
+###Quick simple stats
+#soilStat1 <-
+SoilCarea %>%
+  dplyr::select(Biome,
+                     SoilC1_Control_StockData_MgC_ha_scaled,
+                     SoilC1_Burned1_StockData_MgC_ha_scaled) %>%
+  pivot_longer(names_to = "Case", values_to = "SoilC_Mg_ha", -Biome) %>%
+  ggplot(aes(x = Biome, y = SoilC_Mg_ha, color = Case)) +
+  geom_jitter(alpha = 0.5) +
+  geom_boxplot(alpha = 0)+
+  coord_flip() +
+  theme(legend.position = "bottom")
+
+SoilCarea %>%
+  dplyr::select(Biome,
+                SoilC1_Control_StockData_MgC_ha_scaled,
+                SoilC1_Burned1_StockData_MgC_ha_scaled) %>%
+  mutate(SoilCDelta = (SoilC1_Burned1_StockData_MgC_ha_scaled-SoilC1_Control_StockData_MgC_ha_scaled)) %>%
+  ggplot(aes(x = Biome, y = SoilCDelta)) +
+  geom_jitter(alpha = 0.5) +
+  geom_boxplot(alpha = 0) +
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme(legend.position = "none")
+
+SoilCarea %>%
+  dplyr::select(Biome,
+                SoilC1_Control_StockData_MgC_ha_scaled,
+                SoilC1_Burned1_StockData_MgC_ha_scaled) %>%
+  mutate(SoilCDelta = (SoilC1_Burned1_StockData_MgC_ha_scaled-SoilC1_Control_StockData_MgC_ha_scaled)) %>%
+  ggplot(aes(x = SoilCDelta)) +
+  geom_density() +
+  geom_vline(xintercept = 0, linetype = "dashed")
+
+x <- SoilCarea %>%
+  dplyr::select(SoilC1_Control_StockData_MgC_ha_scaled,
+                SoilC1_Burned1_StockData_MgC_ha_scaled) %>%
+  mutate(SoilCDelta = (SoilC1_Burned1_StockData_MgC_ha_scaled-SoilC1_Control_StockData_MgC_ha_scaled)) %>%
+  dplyr::select(SoilCDelta)
+
+t.test(x) #Is mean soilCDelta significantly different from 0? Yes
+
+
+
+
+summary(aov(SoilC_Mg_ha ~ Case, data = soilStat1))
+
+
   ggplot(aes(y = SoilC1_Delta2)) +
   geom_density() +
   geom_hline(yintercept = 0, linetype = "dashed") +

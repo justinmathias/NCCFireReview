@@ -40,8 +40,8 @@ coord.convert <- function(coord, fn){
     }
   }
 
-#Tests
-coord.convert("21 35 45", "dms.to.dd") #It works!
+# #Tests
+# coord.convert("21 35 45", "dms.to.dd") #It works!
 
 
 #Parsing out data (works for parentheses and plus/minus)----
@@ -72,13 +72,13 @@ sep.data <- function(dat, in_col, return = "Value") {
   }
 }
 
-x <- data.frame(Value = #Create test data frame
-                  c("5(78)",
-                    "4 (56)",
-                    "4 ± 56",
-                    "4±56"))
+# x <- data.frame(Value = #Create test data frame
+#                   c("5(78)",
+#                     "4 (56)",
+#                     "4 ± 56",
+#                     "4±56"))
 
-sep.data(x, in_col = Value) #Test! Works on parentheses and plus/minus!
+# sep.data(x, in_col = Value) #Test! Works on parentheses and plus/minus!
 
 #Parsing out lat/lon----
 sep.coords <- function(dat, in_col, return = "LatLon") {
@@ -103,12 +103,12 @@ sep.coords <- function(dat, in_col, return = "LatLon") {
   }
 }
 
-x <- data.frame("latlon" =
-                  c("43.5/-67.9",
-                    "43.5,-67.9",
-                    "43.5, -67.9",
-                    "43.5 /-67.9"))
-sep.coords(x, in_col = "latlon") #It works!
+# x <- data.frame("latlon" =
+#                   c("43.5/-67.9",
+#                     "43.5,-67.9",
+#                     "43.5, -67.9",
+#                     "43.5 /-67.9"))
+# sep.coords(x, in_col = "latlon") #It works!
 
 
 
@@ -157,7 +157,7 @@ convertSoilC <- function(val, from, to) {
   }
 }
 
-convertSoilC(1, "kg_per_m2", "g / m2")
+# convertSoilC(1, "kg_per_m2", "g / m2")
 
 
 convertTreeC <- function(val, from, to) {
