@@ -1,4 +1,4 @@
-#NCC_Mathias_Belowground
+#NCC_Mathias_Aboveground
 #Created by justin mathias 11/30/22
 
 #Housekeeping: load packages, set themes, etc.
@@ -7,35 +7,26 @@ libraries(c("terra", "ggsci", "ggthemes", "RColorBrewer", "measurements", "strin
             "plotly", "wordcloud", "tm", "soilDB", "aqp", "rhdf5", "drc", "tidyverse", "patchwork"))
 theme_set(theme_article(base_size = 13)) #Set ggplot2 theme
 
-#Read files, starting with row three on belowground sheet, where actual column headers are ------------------------------------------------------
-#Run this chunk of code to get biomes. We need to do it this way because we don't have a lat/lon for every case
-aboveground <- read.xlsx("/Users/justinmathias/Downloads/Literature_Data_extraction_NCC_v3.xlsx",
-                          sheet = "Aboveground",
-                          startRow = 3)
+#Load in data
+agb <- read.xlsx("/Users/justinmathias/Desktop/aboveground_longform_v3.xlsx")
 
-##Read in biomes shapefile----
-#biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
-
-##Append biome to each observation given lat/lon
-Aboveground <- aboveground %>%
+##Create UniqueID and separate Lat/Lon
+agb <- agb %>%
   mutate(UniqueID = paste(RecordID, RecordSubID, sep = "_")) %>% #First create UniqueID to join later
-  drop_na(LatLon) %>% sep.coords(LatLon) #First separate Latitude and Longitude
-
-Aboveground <- Aboveground %>%
-  mutate(Lat = as.numeric(Lat),
+  sep.coords(LatLon) %>% #First separate Latitude and Longitude
+  mutate(Lat = as.numeric(Lat), #Make sure numeric
          Lon = as.numeric(Lon))
 
 
-#Create a new dataframe, coords, so we can extract data from aboveground
-coords <- data.frame(Aboveground$Lon, Aboveground$Lat)
-coords.sp <- SpatialPoints(coords) #Coords need to be LongLat
-proj4string(coords.sp) = proj4string(biomes) #Need to make sure coordinates match.
-#Extract biome information.
-Aboveground <- cbind(Aboveground, over(coords.sp, biomes)$BIOME_NAME)
-#Rename biome column
-names(Aboveground)[names(Aboveground) == "over(coords.sp, biomes)$BIOME_NAME"] <- "Biome"
 
-aboveground <- left_join(aboveground, Aboveground)
+
+
+
+
+
+
+
+
 
 
 
