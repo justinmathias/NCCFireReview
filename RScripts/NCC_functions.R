@@ -189,7 +189,7 @@ convertTreeC <- function(val, from, to) {
     out <- conv_multiunit(val, from1, to1) #Use function from measurements package for conversion
     out
   } else  {
-    val1 <- val*0.45 #If values in terms of BIOMASS, convert to carbon assuming 45% carbon in biomass
+    val1 <- val*0.48 #If values in terms of BIOMASS, convert to carbon assuming 45% carbon in biomass
     from1 <- stri_replace_all_regex(from,
                                     pattern=c('C', '_per_'), #Values to remove
                                     replacement=c('', ' / '), #Values to replace with
