@@ -162,7 +162,7 @@ convertSoilC <- function(val, from, to) {
 
 convertTreeC <- function(val, from, to) {
   #We want all units to be in terms of carbon
-  if (grepl("molC", from) == TRUE) { #If units are in MOLES convert dimensions
+  if (grepl("molC", from) == TRUE) { #If units are in MOLES convert to mass dimensions
     from1 <- stri_replace_all_regex(from, #First remove the C and convert to moles
                                     pattern=c('C', '_per_'), #Values to remove
                                     replacement=c('', ' / '), #Values to replace with
@@ -189,8 +189,8 @@ convertTreeC <- function(val, from, to) {
     out <- conv_multiunit(val, from1, to1) #Use function from measurements package for conversion
     out
   } else  {
-    val1 <- val*0.45 #NEED TO PUT MODIFIER HERE
-    from1 <- stri_replace_all_regex(from, #Otherwise
+    val1 <- val*0.45 #If values in terms of BIOMASS, convert to carbon assuming 45% carbon in biomass
+    from1 <- stri_replace_all_regex(from,
                                     pattern=c('C', '_per_'), #Values to remove
                                     replacement=c('', ' / '), #Values to replace with
                                     vectorize=FALSE)
