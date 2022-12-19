@@ -162,7 +162,9 @@ convertSoilC <- function(val, from, to) {
 
 convertTreeC <- function(val, from, to) {
   #We want all units to be in terms of carbon
-  if (grepl("molC", from) == TRUE) { #If units are in MOLES convert to mass dimensions
+  if (from == "percent" && to == "g / g") {#This chunk allows us to work with percents
+    val/100
+  } else if (grepl("molC", from) == TRUE) { #If units are in MOLES convert to mass dimensions
     from1 <- stri_replace_all_regex(from, #First remove the C and convert to moles
                                     pattern=c('C', '_per_'), #Values to remove
                                     replacement=c('', ' / '), #Values to replace with

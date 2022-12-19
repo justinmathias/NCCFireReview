@@ -25,7 +25,7 @@ agb <- agb %>%
 ##Get all data into numeric format
 AGB <- agb %>%
   mutate( #Convert all values to numeric, removing accompanying standard errors.
-    LiveWoodC_StockData = sep.data(., in_col = LiveWoodC_StockData, return = "Value"), #Convert Stocks to numeric
+    LiveWoodC_StockData = sep.data(., in_col = LiveWoodC_StockData, return = "Value"), #Convert Stocks to numeric, return only value and remove associated std error
     FoliageC_StockData = sep.data(., in_col = FoliageC_StockData, return = "Value"),
     TotalLive_StockData = sep.data(., in_col = TotalLive_StockData, return = "Value"),
     PyC_StockData = sep.data(., in_col = PyC_StockData, return = "Value"),
@@ -68,7 +68,7 @@ TECarea <- c("MgC_per_hectare", "kgC_per_m2", "Mg_per_hectare", "molC_per_m2")
 
 #Create new dataframe subsets for conversions to join back later
 #There's definitely a better way to do this, but this will work for now  ¯\_(ツ)_/¯
-LiveCtmp <- AGB %>%
+LiveCareaTmp <- AGB %>%
   filter(LiveC_units_StockData %in% LiveCarea) %>%
   mutate(
     LiveWoodC_StockData_MgC_ha = unlist(pmap(list(LiveWoodC_StockData, LiveC_units_StockData, "Mg / hectare"), convertTreeC)), #Use LiveC units
@@ -77,13 +77,12 @@ LiveCtmp <- AGB %>%
     TotalAboveground_StockData_MgC_ha = unlist(pmap(list(TotalAboveground_StockData, LiveC_units_StockData, "Mg / hectare"), convertTreeC)), #Use LiveC units
   )
 
-PyCtmp <- AGB %>%
+PyCareaTmp <- AGB %>%
   filter(PyC_units_StockData %in% PyCarea) %>%
   mutate(PyC_StockData_MgC_ha = unlist(pmap(list(PyC_StockData, PyC_units_StockData, "Mg / hectare"), convertTreeC)), #Use PyC units
   )
 
-
-DeadCtmp <- AGB %>%
+DeadCareaTmp <- AGB %>%
   filter(DeadC_units_StockData %in% DeadCarea) %>%
   mutate(
     CWDC_StockData_MgC_ha = unlist(pmap(list(CWDC_StockData, DeadC_units_StockData, "Mg / hectare"), convertTreeC)), #Use DeadC units
@@ -91,22 +90,97 @@ DeadCtmp <- AGB %>%
     TotalDead_StockData_MgC_ha = unlist(pmap(list(TotalDead_StockData, DeadC_units_StockData, "Mg / hectare"), convertTreeC)), #Use DeadC units
   )
 
-LitterCtmp <- AGB %>%
+LitterCareaTmp <- AGB %>%
   filter(LitterC_units_StockData %in% LitterCarea) %>%
   mutate(
     LitterC_StockData_MgC_ha = unlist(pmap(list(LitterC_StockData, LitterC_units_StockData, "Mg / hectare"), convertTreeC)), #Use LitterC units
   )
 
-TECtmp <- AGB %>%
+TECareaTmp <- AGB %>%
   filter(TEC_units_StockData %in% TECarea) %>%
   mutate(
     TEC_StockData_MgC_ha = unlist(pmap(list(TEC_StockData, TEC_units_StockData, "Mg / hectare"), convertTreeC)), #Use TEC units
   )
 
-#Combine it all!
-AGB_converted <- list(AGB, LiveCtmp, PyCtmp, DeadCtmp, LitterCtmp, TECtmp) %>% reduce(left_join)
 
-#setwd("/Users/justinmathias/Desktop/Working NCC")
+
+# Mass basis calculations -------------------------------------------------
+#Identify unique units and define which to include on mass basis
+unique(AGB$LiveC_units_StockData)
+LiveCmass <- c("gC_per_kg", "percent")
+
+unique(AGB$LitterC_units_StockData)
+LitterCmass <- c("percent")
+
+#LiveC and LitterC have percent. Don't forget to merge them
+
+#Create new dataframe subsets for conversions to join back later
+#There's definitely a better way to do this, but this will work for now  ¯\_(ツ)_/¯
+LiveCmassTmp <- AGB %>%
+  filter(LiveC_units_StockData %in% LiveCmass) %>%
+  mutate(
+    LiveWoodC_StockData_percent = 100*unlist(pmap(list(LiveWoodC_StockData, LiveC_units_StockData, "g / g"), convertTreeC)), #Use LiveC units
+    FoliageC_StockData_percent = 100*unlist(pmap(list(FoliageC_StockData, LiveC_units_StockData, "g / g"), convertTreeC)), #Use LiveC units
+    TotalLive_StockData_percent = 100*unlist(pmap(list(TotalLive_StockData, LiveC_units_StockData, "g / g"), convertTreeC)), #Use LiveC units
+    TotalAboveground_StockData_percent = 100*unlist(pmap(list(TotalAboveground_StockData, LiveC_units_StockData, "g / g"), convertTreeC)), #Use LiveC units
+  )
+
+LitterCmassTmp <- AGB %>%
+  filter(LitterC_units_StockData %in% LitterCmass) %>%
+  mutate(
+    LitterC_StockData_percent = 100*unlist(pmap(list(LitterC_StockData, LitterC_units_StockData, "g / g"), convertTreeC)) #Use LitterC units
+  )
+
+#Combine it all!
+AGB_converted_area <- list(AGB, LiveCareaTmp, PyCareaTmp, DeadCareaTmp, LitterCareaTmp, TECareaTmp, LiveCmassTmp, LitterCmassTmp) %>% reduce(left_join)
+
+
+# Now add biomes ----------------------------------------------------------
+##Read in biomes shapefile
+biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
+biomes2 <- readOGR("/Users/justinmathias/Downloads/official/wwf_terr_ecos.shp")
+
+AGB_converted_area <- AGB_converted_area %>%
+  mutate(UniqueID = paste(RecordID, RecordSubID_new, sep = "_"))
+
+AGB_Converted_Area <- AGB_converted_area %>% #First create UniqueID to join later
+  drop_na(Lat, Lon)
+
+
+#Create a new dataframe, coords, so we can extract data from AGB_converted_area
+coords <- data.frame(AGB_Converted_Area$Lon, AGB_Converted_Area$Lat)
+coords.sp <- SpatialPoints(coords) #Coords need to be LongLat
+proj4string(coords.sp) = proj4string(biomes) #Need to make sure coordinates match.
+#Extract biome information.
+AGB_Converted_Area <- cbind(AGB_Converted_Area, over(coords.sp, biomes)$BIOME_NAME)
+#Rename biome column
+names(AGB_Converted_Area)[names(AGB_Converted_Area) == "over(coords.sp, biomes)$BIOME_NAME"] <- "Biome"
+
+#Merge back together
+AGB_converted <- left_join(AGB_converted_area, AGB_Converted_Area)
+
+#Create lookuptable
+lookup.table <- c("Tropical & Subtropical Moist Broadleaf Forests" = "TropicalForest",
+"Tropical & Subtropical Dry Broadleaf Forests" = "TropicalForest",
+"Tropical & Subtropical Coniferous Forests" = "TropicalForest",
+'Temperate Broadleaf & Mixed Forests' = "TemperateForests",
+"Temperate Conifer Forests" = "TemperateForests",
+"Boreal Forests/Taiga" = "AlpineBorealForests",
+"Tropical & Subtropical Grasslands, Savannas & Shrublands" = "TropicalGrassland",
+"Temperate Grasslands, Savannas & Shrublands" = "TemperateGrassland",
+"Flooded Grasslands & Savannas" = "FloodedGrassland",
+"Montane Grasslands & Shrublands" = "AlpineBorealForests",
+"Tundra" = "AlpineBorealForests",
+"Mediterranean Forests, Woodlands & Scrub" = "Mediterranean",
+"Deserts & Xeric Shrublands" = "Deserts")
+
+AGB_converted$Biome_simple <- lookup.table[AGB_converted$Biome]
+
+
+
+
+
+setwd("/Users/justinmathias/Desktop/Working NCC")
 write.xlsx(AGB_converted, "AbovegroundConverted.xlsx")
 
 
