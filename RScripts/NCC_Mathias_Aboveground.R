@@ -182,6 +182,10 @@ AGB_converted$Biome_simple <- lookup.table[AGB_converted$Biome]
 
 #Identify fluxes unique units and define which to include on area basis
 unique(AGB$ANPP_units_FluxData)
+LiveCarea <- c("MgC_per_hectare_per_year","g_per_m2_per_year","Mg_per_hectare_per_year","gC_per_m2_per_year","g_per_m2")
+
+
+
 unique(AGB$GPP_units_FluxData)
 unique(AGB$Ra_units_FluxData)
 unique(AGB$NPP_units_FluxData)

@@ -222,6 +222,53 @@ calc_soilC <- function(bdod, soc, hzdept, hzdepb) {
 }
 
 
+convertTreeCflux <- function(val, from, to) { #Inherits duration from "from"
+  #We want all units to be in terms of carbon
+  if (grepl("molC", from) == TRUE) { #If units are in MOLES convert to mass dimensions
+    from1 <- stri_replace_all_regex(from, #First remove the C and convert to moles
+                                    pattern=c('C', '_per_'), #Values to remove
+                                    replacement=c('', ' / '), #Values to replace with
+                                    vectorize=FALSE)
+    middleTerm <- str_match(from, "_per_(.*?)_per_")[,2] #Extract area term. Note this only works when units before/after
+    duration <- sub('.*_per_', '', from) #Snag the duration to inherit for output
+    molC <- conv_multiunit(x = val, from = from1, to = paste0("mol / ",middleTerm, " / " ,denominator)) #Convert given units to molC
+    gC <- molC*12.01 #Convert moles of carbon to grams of carbon
+    to1 <- paste0(stri_replace_all_regex(to, #Define to units in correct format
+                                         pattern=c('_per_'), #Values to remove
+                                         replacement=c(' / '), #Values to replace with
+                                         vectorize=FALSE), " / ", duration)
+    out <- conv_multiunit(gC, paste0("g / ", middleTerm, " / ", denominator), to1) #Use function from measurements package for conversion
+    out
+
+  } else if (grepl("C", from) == TRUE) { #If the units are already in terms of CARBON, then do simple conversion
+    duration <- sub('.*_per_', '', from) #Snag the duration to inherit for output
+    from1 <- stri_replace_all_regex(from,
+                                    pattern=c('C', '_per_'), #Values to remove
+                                    replacement=c('', ' / '), #Values to replace with
+                                    vectorize=FALSE)
+    to1 <- paste0(stri_replace_all_regex(to,
+                                         pattern=c('_per_'), #Values to remove
+                                         replacement=c(' / '), #Values to replace with
+                                         vectorize=FALSE), " / ", duration) #Inherit original time frame
+    out <- conv_multiunit(val, from1, to1) #Use function from measurements package for conversion
+    out
+  } else  {
+    val1 <- val*0.48 #If values in terms of BIOMASS, convert to carbon assuming 48% carbon in biomass
+    duration <- sub('.*_per_', '', from) #Snag the duration to inherit for output
+    from1 <- stri_replace_all_regex(from,
+                                    pattern=c('C', '_per_'), #Values to remove
+                                    replacement=c('', ' / '), #Values to replace with
+                                    vectorize=FALSE)
+    to1 <- paste0(stri_replace_all_regex(to,
+                                         pattern=c('_per_'), #Values to remove
+                                         replacement=c(' / '), #Values to replace with
+                                         vectorize=FALSE), " / ", duration) #Inherit original time frame
+    out <- conv_multiunit(val1, from1, to1) #Use function from measurements package for conversion
+    out
+  }
+}
+
+
 # Scaling soil C depth ------------------------------------------------------
 scale.depth <- function(inValue, inDepth_cm, outDepth_cm = 5) { #This function will linearly scale soil C content on an areas basis given depth. Defaults to 0-5cm output
   c <- 0.275595 #Fit via a three parameter asymptotic regression model "AR.3()" using drc R package
