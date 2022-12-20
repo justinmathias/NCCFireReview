@@ -49,7 +49,7 @@ AGB <- agb %>%
     TotalAbovegroundC_Emissions = sep.data(., in_col = TotalAbovegroundC_Emissions, return = "Value"),
   )
 
-#Identify unique units and define which to include on area basis
+#Identify stocks unique units and define which to include on area basis
 unique(AGB$LiveC_units_StockData)
 LiveCarea <- c("Mg_per_hectare", "MgC_per_hectare", "gC_per_m2", "g_per_m2", "kg_per_hectare",
                "kgC_per_m2", "kgC_per_hectare", "kg_per_m2", "molC_per_m2")
@@ -163,18 +163,76 @@ AGB_converted <- left_join(AGB_converted_area, AGB_Converted_Area)
 lookup.table <- c("Tropical & Subtropical Moist Broadleaf Forests" = "TropicalForest",
 "Tropical & Subtropical Dry Broadleaf Forests" = "TropicalForest",
 "Tropical & Subtropical Coniferous Forests" = "TropicalForest",
-'Temperate Broadleaf & Mixed Forests' = "TemperateForests",
-"Temperate Conifer Forests" = "TemperateForests",
-"Boreal Forests/Taiga" = "AlpineBorealForests",
+'Temperate Broadleaf & Mixed Forests' = "TemperateForest",
+"Temperate Conifer Forests" = "TemperateForest",
+"Boreal Forests/Taiga" = "AlpineBorealForest",
 "Tropical & Subtropical Grasslands, Savannas & Shrublands" = "TropicalGrassland",
 "Temperate Grasslands, Savannas & Shrublands" = "TemperateGrassland",
 "Flooded Grasslands & Savannas" = "FloodedGrassland",
-"Montane Grasslands & Shrublands" = "AlpineBorealForests",
-"Tundra" = "AlpineBorealForests",
+"Montane Grasslands & Shrublands" = "AlpineBorealForest",
+"Tundra" = "AlpineBorealForest",
 "Mediterranean Forests, Woodlands & Scrub" = "Mediterranean",
-"Deserts & Xeric Shrublands" = "Deserts")
+"Deserts & Xeric Shrublands" = "Desert")
 
 AGB_converted$Biome_simple <- lookup.table[AGB_converted$Biome]
+
+
+
+# #Standardize fluxes -----------------------------------------------------
+
+#Identify fluxes unique units and define which to include on area basis
+unique(AGB$ANPP_units_FluxData)
+unique(AGB$GPP_units_FluxData)
+unique(AGB$Ra_units_FluxData)
+unique(AGB$NPP_units_FluxData)
+unique(AGB$NEP_units_FluxData)
+unique(AGB$Reco_units_FluxData)
+unique(AGB$Photosynthesis_units_FluxData)
+
+unique(AGB$LiveC_units_StockData)
+LiveCarea <- c("Mg_per_hectare", "MgC_per_hectare", "gC_per_m2", "g_per_m2", "kg_per_hectare",
+               "kgC_per_m2", "kgC_per_hectare", "kg_per_m2", "molC_per_m2")
+
+unique(AGB$PyC_units_StockData)
+PyCarea <- c("MgC_per_hectare", "g_per_m2", "Mg_per_hectare", "metric_ton_per_hectare", "kgC_per_hectare")
+
+unique(AGB$DeadC_units_StockData)
+DeadCarea <- c("Mg_per_hectare", "MgC_per_hectare", "kg_per_hectare", "g_per_m2", "gC_per_m2", "kgC_per_m2", "kg_per_m2")
+
+unique(AGB$LitterC_units_StockData)
+LitterCarea <- c("g_per_m2", "gC_per_m2", "MgC_per_hectare", "kgC_per_hectare", "kg_per_m2")
+
+unique(AGB$TEC_units_StockData)
+TECarea <- c("MgC_per_hectare", "kgC_per_m2", "Mg_per_hectare", "molC_per_m2")
+
+#Create new dataframe subsets for conversions to join back later
+#There's definitely a better way to do this, but this will work for now  ¯\_(ツ)_/¯
+LiveCareaTmp <- AGB %>%
+  filter(LiveC_units_StockData %in% LiveCarea) %>%
+  mutate(
+    LiveWoodC_StockData_MgC_ha = unlist(pmap(list(LiveWoodC_StockData, LiveC_units_StockData, "Mg / hectare"), convertTreeC)), #Use LiveC units
+    FoliageC_StockData_MgC_ha = unlist(pmap(list(FoliageC_StockData, LiveC_units_StockData, "Mg / hectare"), convertTreeC)), #Use LiveC units
+    TotalLive_StockData_MgC_ha = unlist(pmap(list(TotalLive_StockData, LiveC_units_StockData, "Mg / hectare"), convertTreeC)), #Use LiveC units
+    TotalAboveground_StockData_MgC_ha = unlist(pmap(list(TotalAboveground_StockData, LiveC_units_StockData, "Mg / hectare"), convertTreeC)), #Use LiveC units
+  )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
