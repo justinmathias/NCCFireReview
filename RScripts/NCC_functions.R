@@ -285,6 +285,12 @@ convertTreeCflux <- function(val, from, to) { #Inherits duration from "from"
 }
 
 
+extractDuration <- function(units_in) {
+  duration <- sub('.*_per_', '', units_in) #Snag the duration to inherit for output
+  duration
+}
+
+
 # Scaling soil C depth ------------------------------------------------------
 scale.depth <- function(inValue, inDepth_cm, outDepth_cm = 5) { #This function will linearly scale soil C content on an areas basis given depth. Defaults to 0-5cm output
   c <- 0.275595 #Fit via a three parameter asymptotic regression model "AR.3()" using drc R package

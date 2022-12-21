@@ -182,47 +182,60 @@ AGB_converted$Biome_simple <- lookup.table[AGB_converted$Biome]
 
 #Identify fluxes unique units and define which to include on area basis
 unique(AGB$ANPP_units_FluxData)
-LiveCarea <- c("MgC_per_hectare_per_year","g_per_m2_per_year","Mg_per_hectare_per_year","gC_per_m2_per_year","g_per_m2")
-
-
+ANPPCarea <- c("MgC_per_hectare_per_yr", "g_per_m2_per_yr","Mg_per_hectare_per_yr","gC_per_m2_per_yr")
 
 unique(AGB$GPP_units_FluxData)
-unique(AGB$Ra_units_FluxData)
+GPPCarea <- c("gC_per_m2_per_yr", "gC_per_m2_per_day", "umolCO2_per_m2_per_sec", "gC_per_m2_per_mon")
+
 unique(AGB$NPP_units_FluxData)
+NPPCarea <- c("gC_per_m2_per_yr", "Mg_per_hectare_per_yr")
+
 unique(AGB$NEP_units_FluxData)
+NEPCarea <- c("umolCO2_per_m2_per_sec", "gC_per_m2_per_yr", "gC_per_m2_per_day", "molC_per_m2_per_yr")
+
 unique(AGB$Reco_units_FluxData)
+RecoCarea <- c("umolCO2_per_m2_per_sec", "gC_per_m2_per_day", "gC_per_m2_per_yr")
+
 unique(AGB$Photosynthesis_units_FluxData)
-
-unique(AGB$LiveC_units_StockData)
-LiveCarea <- c("Mg_per_hectare", "MgC_per_hectare", "gC_per_m2", "g_per_m2", "kg_per_hectare",
-               "kgC_per_m2", "kgC_per_hectare", "kg_per_m2", "molC_per_m2")
-
-unique(AGB$PyC_units_StockData)
-PyCarea <- c("MgC_per_hectare", "g_per_m2", "Mg_per_hectare", "metric_ton_per_hectare", "kgC_per_hectare")
-
-unique(AGB$DeadC_units_StockData)
-DeadCarea <- c("Mg_per_hectare", "MgC_per_hectare", "kg_per_hectare", "g_per_m2", "gC_per_m2", "kgC_per_m2", "kg_per_m2")
-
-unique(AGB$LitterC_units_StockData)
-LitterCarea <- c("g_per_m2", "gC_per_m2", "MgC_per_hectare", "kgC_per_hectare", "kg_per_m2")
-
-unique(AGB$TEC_units_StockData)
-TECarea <- c("MgC_per_hectare", "kgC_per_m2", "Mg_per_hectare", "molC_per_m2")
+PhotosynthesisCarea <- c("umolCO2_per_m2_per_sec")
 
 #Create new dataframe subsets for conversions to join back later
 #There's definitely a better way to do this, but this will work for now  ¯\_(ツ)_/¯
-LiveCareaTmp <- AGB %>%
-  filter(LiveC_units_StockData %in% LiveCarea) %>%
+ANPPCareaTmp <- AGB %>%
+  filter(ANPP_units_FluxData %in% ANPPCarea) %>%
   mutate(
-    LiveWoodC_StockData_MgC_ha = unlist(pmap(list(LiveWoodC_StockData, LiveC_units_StockData, "Mg / hectare"), convertTreeC)), #Use LiveC units
-    FoliageC_StockData_MgC_ha = unlist(pmap(list(FoliageC_StockData, LiveC_units_StockData, "Mg / hectare"), convertTreeC)), #Use LiveC units
-    TotalLive_StockData_MgC_ha = unlist(pmap(list(TotalLive_StockData, LiveC_units_StockData, "Mg / hectare"), convertTreeC)), #Use LiveC units
-    TotalAboveground_StockData_MgC_ha = unlist(pmap(list(TotalAboveground_StockData, LiveC_units_StockData, "Mg / hectare"), convertTreeC)), #Use LiveC units
+    ANPP_FluxData_g_m2 = unlist(pmap(list(ANPP_FluxData, ANPP_units_FluxData, "g / m2"), convertTreeCflux)), #Use ANPP units
   )
 
+GPPCareaTmp <- AGB %>%
+  filter(GPP_units_FluxData %in% GPPCarea) %>%
+  mutate(
+    GPP_FluxData_g_m2 = unlist(pmap(list(GPP_FluxData, GPP_units_FluxData, "g / m2"), convertTreeCflux)), #Use GPP units
+  )
 
+NPPCareaTmp <- AGB %>%
+  filter(NPP_units_FluxData %in% NPPCarea) %>%
+  mutate(
+    NPP_FluxData_g_m2 = unlist(pmap(list(NPP_FluxData, NPP_units_FluxData, "g / m2"), convertTreeCflux)), #Use NPP units
+  )
 
+NEPCareaTmp <- AGB %>%
+  filter(NEP_units_FluxData %in% NEPCarea) %>%
+  mutate(
+    NEP_FluxData_g_m2 = unlist(pmap(list(NEP_FluxData, NEP_units_FluxData, "g / m2"), convertTreeCflux)), #Use NEP units
+  )
 
+RecoCareaTmp <- AGB %>%
+  filter(Reco_units_FluxData %in% RecoCarea) %>%
+  mutate(
+    Reco_FluxData_g_m2 = unlist(pmap(list(Reco_FluxData, Reco_units_FluxData, "g / m2"), convertTreeCflux)), #Use Reco units
+  )
+
+PhotosynthesisCareaTmp <- AGB %>%
+  filter(Photosynthesis_units_FluxData %in% PhotosynthesisCarea) %>%
+  mutate(
+    Photosynthesis_FluxData_g_m2 = unlist(pmap(list(Photosynthesis_num_FluxData, Photosynthesis_units_FluxData, "g / m2"), convertTreeCflux)), #Use Photosynthesis units
+  )
 
 
 
