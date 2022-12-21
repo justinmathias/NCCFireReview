@@ -9,17 +9,17 @@ theme_set(theme_article(base_size = 13)) #Set ggplot2 theme
 
 #Read files, starting with row three on belowground sheet, where actual column headers are ------------------------------------------------------
 #Run this chunk of code to get biomes. We need to do it this way because we don't have a lat/lon for every case
-{belowground <- read.xlsx("/Users/justinmathias/Downloads/Literature_Data_extraction_NCC_v3.xlsx",
-                         sheet = "Belowground",
-                         startRow = 3)
+{belowground <- read.xlsx("/Users/justinmathias/Desktop/Working NCC/belowground_longform_v3.xlsx")
 
 ##Read in biomes shapefile----
 biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
 
 ##Append biome to each observation given lat/lon
+belowground <- belowground %>%
+  mutate(UniqueID = paste(RecordID, RecordSubID_new, sep = "_")) #First create UniqueID to join later
+
 Belowground <- belowground %>%
-  mutate(UniqueID = paste(RecordID, RecordSubID, sep = "_")) %>% #First create UniqueID to join later
-  drop_na(LatLon) %>% sep.coords(LatLon) #First separate Latitude and Longitude
+  drop_na(LatLon) %>% sep.coords(LatLon) #Separate Latitude and Longitude
 
 #Create a new dataframe, coords, so we can extract data from belowground
 coords <- data.frame(Belowground$Lon, Belowground$Lat)
@@ -31,7 +31,25 @@ Belowground <- cbind(Belowground, over(coords.sp, biomes)$BIOME_NAME)
 names(Belowground)[names(Belowground) == "over(coords.sp, biomes)$BIOME_NAME"] <- "Biome"
 
 belowground <- left_join(belowground, Belowground)
+
+#Create lookuptable
+lookup.table <- c("Tropical & Subtropical Moist Broadleaf Forests" = "TropicalForest",
+                  "Tropical & Subtropical Dry Broadleaf Forests" = "TropicalForest",
+                  "Tropical & Subtropical Coniferous Forests" = "TropicalForest",
+                  'Temperate Broadleaf & Mixed Forests' = "TemperateForest",
+                  "Temperate Conifer Forests" = "TemperateForest",
+                  "Boreal Forests/Taiga" = "AlpineBorealForest",
+                  "Tropical & Subtropical Grasslands, Savannas & Shrublands" = "TropicalGrassland",
+                  "Temperate Grasslands, Savannas & Shrublands" = "TemperateGrassland",
+                  "Flooded Grasslands & Savannas" = "FloodedGrassland",
+                  "Montane Grasslands & Shrublands" = "AlpineBorealForest",
+                  "Tundra" = "AlpineBorealForest",
+                  "Mediterranean Forests, Woodlands & Scrub" = "Mediterranean",
+                  "Deserts & Xeric Shrublands" = "Desert")
+
+belowground$Biome_simple <- lookup.table[belowground$Biome]
 }
+
 
 #Working with soil C data for scaling by depth ------------------------------------------------------
 ##Fetch and wrangle soil C data from soilgrids.org----
@@ -61,7 +79,8 @@ soilsFinal <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Na
 
 ##Create dataframe containing UniqueIDs and Lat/Lon to retrieve biome information----
 soilsLocations <- belowground %>%
-  dplyr::select(UniqueID, Lat, Lon, Biome)
+  mutate(UniqueID = paste(RecordID, RecordSubID_old, sep = "_")) %>% #OVERWRITE UNIQUEID HERE FOR SOILS CARBON
+  dplyr::select(UniqueID, Lat, Lon, Biome_simple)
 
 #Join dataframes to get locations for soilC
 soilsCarbon <- left_join(soilsFinal, soilsLocations)
@@ -122,14 +141,36 @@ soilCareainclude <-
   c( #For these, only include mass soil per area basis
     "kgC_per_m2",
     "gC_per_m2",
-    "MgC_per_hectare",
     "mgC_per_cm2",
     "gC_per_cm2",
+    "MgC_per_hectare",
     "kgC_per_hectare",
     "mgC_per_hectare",
     "Mg_per_hectare",
     "molC_per_m2"
+    )
+
+soilCmassinclude <- c(
+  "percent",
+  "gC_per_kg",
+  "gC_per_g",
+  "g_per_kg",
+  "mgC_per_g",
+  "g_per_g",
+  "mgC_per_gram",
+  "mg_per_g",
+  "mgC_per_kg"
   )
+
+
+
+
+
+
+
+
+)
+
 
 ###Tidy data to create UniqueID and remove NA values
 soilCarea <- belowground %>% filter(SoilC_Units_Control_StockData %in% soilCareainclude) #Filter belowground tab to only include soilC on area basis
