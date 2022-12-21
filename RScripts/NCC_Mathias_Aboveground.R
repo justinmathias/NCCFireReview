@@ -205,58 +205,50 @@ ANPPCareaTmp <- AGB %>%
   filter(ANPP_units_FluxData %in% ANPPCarea) %>%
   mutate(
     ANPP_FluxData_g_m2 = unlist(pmap(list(ANPP_FluxData, ANPP_units_FluxData, "g / m2"), convertTreeCflux)), #Use ANPP units
+    ANPP_FluxData_g_m2_unit = unlist(pmap(list(ANPP_units_FluxData), extractDuration))
   )
 
 GPPCareaTmp <- AGB %>%
   filter(GPP_units_FluxData %in% GPPCarea) %>%
   mutate(
     GPP_FluxData_g_m2 = unlist(pmap(list(GPP_FluxData, GPP_units_FluxData, "g / m2"), convertTreeCflux)), #Use GPP units
+    GPP_FluxData_g_m2_unit = unlist(pmap(list(GPP_units_FluxData), extractDuration))
   )
 
 NPPCareaTmp <- AGB %>%
   filter(NPP_units_FluxData %in% NPPCarea) %>%
   mutate(
     NPP_FluxData_g_m2 = unlist(pmap(list(NPP_FluxData, NPP_units_FluxData, "g / m2"), convertTreeCflux)), #Use NPP units
+    NPP_FluxData_g_m2_unit = unlist(pmap(list(NPP_units_FluxData), extractDuration))
   )
 
 NEPCareaTmp <- AGB %>%
   filter(NEP_units_FluxData %in% NEPCarea) %>%
   mutate(
     NEP_FluxData_g_m2 = unlist(pmap(list(NEP_FluxData, NEP_units_FluxData, "g / m2"), convertTreeCflux)), #Use NEP units
+    NEP_FluxData_g_m2_unit = unlist(pmap(list(NEP_units_FluxData), extractDuration))
   )
 
 RecoCareaTmp <- AGB %>%
   filter(Reco_units_FluxData %in% RecoCarea) %>%
   mutate(
     Reco_FluxData_g_m2 = unlist(pmap(list(Reco_FluxData, Reco_units_FluxData, "g / m2"), convertTreeCflux)), #Use Reco units
+    Reco_FluxData_g_m2_unit = unlist(pmap(list(Reco_units_FluxData), extractDuration))
   )
 
 PhotosynthesisCareaTmp <- AGB %>%
   filter(Photosynthesis_units_FluxData %in% PhotosynthesisCarea) %>%
   mutate(
     Photosynthesis_FluxData_g_m2 = unlist(pmap(list(Photosynthesis_num_FluxData, Photosynthesis_units_FluxData, "g / m2"), convertTreeCflux)), #Use Photosynthesis units
+    Photosynthesis_FluxData_g_m2_unit = unlist(pmap(list(Photosynthesis_units_FluxData), extractDuration))
   )
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+AGB_converted_final <- list(AGB_converted, ANPPCareaTmp, GPPCareaTmp, NPPCareaTmp, NEPCareaTmp, RecoCareaTmp, PhotosynthesisCareaTmp) %>% reduce(left_join)
 
 
 setwd("/Users/justinmathias/Desktop/Working NCC")
-write.xlsx(AGB_converted, "AbovegroundConverted.xlsx")
+write.xlsx(AGB_converted_final, "AbovegroundConverted.xlsx")
 
 
 
