@@ -132,32 +132,31 @@ LitterCmassTmp <- AGB %>%
   )
 
 #Combine it all!
-AGB_converted_area <- list(AGB, LiveCareaTmp, PyCareaTmp, DeadCareaTmp, LitterCareaTmp, TECareaTmp, LiveCmassTmp, LitterCmassTmp) %>% reduce(left_join)
+AGB_converted <- list(AGB, LiveCareaTmp, PyCareaTmp, DeadCareaTmp, LitterCareaTmp, TECareaTmp, LiveCmassTmp, LitterCmassTmp) %>% reduce(left_join)
 
 
 # Now add biomes ----------------------------------------------------------
 ##Read in biomes shapefile
 biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
-biomes2 <- readOGR("/Users/justinmathias/Downloads/official/wwf_terr_ecos.shp")
 
-AGB_converted_area <- AGB_converted_area %>%
-  mutate(UniqueID = paste(RecordID, RecordSubID_new, sep = "_"))
+AGB_converted <- AGB_converted %>%
+  mutate(UniqueID = paste(RecordID, RecordSubID_new, sep = "_")) #First create UniqueID to join later
 
-AGB_Converted_Area <- AGB_converted_area %>% #First create UniqueID to join later
+AGB_Converted <- AGB_converted %>%
   drop_na(Lat, Lon)
 
 
-#Create a new dataframe, coords, so we can extract data from AGB_converted_area
-coords <- data.frame(AGB_Converted_Area$Lon, AGB_Converted_Area$Lat)
+#Create a new dataframe, coords, so we can extract data from AGB_converted
+coords <- data.frame(AGB_Converted$Lon, AGB_Converted$Lat)
 coords.sp <- SpatialPoints(coords) #Coords need to be LongLat
 proj4string(coords.sp) = proj4string(biomes) #Need to make sure coordinates match.
 #Extract biome information.
-AGB_Converted_Area <- cbind(AGB_Converted_Area, over(coords.sp, biomes)$BIOME_NAME)
+AGB_Converted <- cbind(AGB_Converted, over(coords.sp, biomes)$BIOME_NAME)
 #Rename biome column
-names(AGB_Converted_Area)[names(AGB_Converted_Area) == "over(coords.sp, biomes)$BIOME_NAME"] <- "Biome"
+names(AGB_Converted)[names(AGB_Converted) == "over(coords.sp, biomes)$BIOME_NAME"] <- "Biome"
 
 #Merge back together
-AGB_converted <- left_join(AGB_converted_area, AGB_Converted_Area)
+AGB_converted <- left_join(AGB_converted, AGB_Converted)
 
 #Create lookuptable
 lookup.table <- c("Tropical & Subtropical Moist Broadleaf Forests" = "TropicalForest",
@@ -181,62 +180,62 @@ AGB_converted$Biome_simple <- lookup.table[AGB_converted$Biome]
 # #Standardize fluxes -----------------------------------------------------
 
 #Identify fluxes unique units and define which to include on area basis
-unique(AGB$ANPP_units_FluxData)
+unique(AGB_converted$ANPP_units_FluxData)
 ANPPCarea <- c("MgC_per_hectare_per_yr", "g_per_m2_per_yr","Mg_per_hectare_per_yr","gC_per_m2_per_yr")
 
-unique(AGB$GPP_units_FluxData)
-GPPCarea <- c("gC_per_m2_per_yr", "gC_per_m2_per_day", "umolCO2_per_m2_per_sec", "gC_per_m2_per_mon")
+unique(AGB_converted$GPP_units_FluxData)
+GPPCarea <- c("gC_per_m2_per_yr", "gC_per_m2_per_day",  "gC_per_m2_per_mon", "umolCO2_per_m2_per_sec")
 
-unique(AGB$NPP_units_FluxData)
+unique(AGB_converted$NPP_units_FluxData)
 NPPCarea <- c("gC_per_m2_per_yr", "Mg_per_hectare_per_yr")
 
-unique(AGB$NEP_units_FluxData)
+unique(AGB_converted$NEP_units_FluxData)
 NEPCarea <- c("umolCO2_per_m2_per_sec", "gC_per_m2_per_yr", "gC_per_m2_per_day", "molC_per_m2_per_yr")
 
-unique(AGB$Reco_units_FluxData)
+unique(AGB_converted$Reco_units_FluxData)
 RecoCarea <- c("umolCO2_per_m2_per_sec", "gC_per_m2_per_day", "gC_per_m2_per_yr")
 
-unique(AGB$Photosynthesis_units_FluxData)
+unique(AGB_converted$Photosynthesis_units_FluxData)
 PhotosynthesisCarea <- c("umolCO2_per_m2_per_sec")
 
 #Create new dataframe subsets for conversions to join back later
 #There's definitely a better way to do this, but this will work for now  ¯\_(ツ)_/¯
-ANPPCareaTmp <- AGB %>%
+ANPPCareaTmp <- AGB_converted %>%
   filter(ANPP_units_FluxData %in% ANPPCarea) %>%
   mutate(
     ANPP_FluxData_g_m2 = unlist(pmap(list(ANPP_FluxData, ANPP_units_FluxData, "g / m2"), convertTreeCflux)), #Use ANPP units
     ANPP_FluxData_g_m2_unit = unlist(pmap(list(ANPP_units_FluxData), extractDuration))
   )
 
-GPPCareaTmp <- AGB %>%
+GPPCareaTmp <- AGB_converted %>%
   filter(GPP_units_FluxData %in% GPPCarea) %>%
   mutate(
     GPP_FluxData_g_m2 = unlist(pmap(list(GPP_FluxData, GPP_units_FluxData, "g / m2"), convertTreeCflux)), #Use GPP units
     GPP_FluxData_g_m2_unit = unlist(pmap(list(GPP_units_FluxData), extractDuration))
   )
 
-NPPCareaTmp <- AGB %>%
+NPPCareaTmp <- AGB_converted %>%
   filter(NPP_units_FluxData %in% NPPCarea) %>%
   mutate(
     NPP_FluxData_g_m2 = unlist(pmap(list(NPP_FluxData, NPP_units_FluxData, "g / m2"), convertTreeCflux)), #Use NPP units
     NPP_FluxData_g_m2_unit = unlist(pmap(list(NPP_units_FluxData), extractDuration))
   )
 
-NEPCareaTmp <- AGB %>%
+NEPCareaTmp <- AGB_converted %>%
   filter(NEP_units_FluxData %in% NEPCarea) %>%
   mutate(
     NEP_FluxData_g_m2 = unlist(pmap(list(NEP_FluxData, NEP_units_FluxData, "g / m2"), convertTreeCflux)), #Use NEP units
     NEP_FluxData_g_m2_unit = unlist(pmap(list(NEP_units_FluxData), extractDuration))
   )
 
-RecoCareaTmp <- AGB %>%
+RecoCareaTmp <- AGB_converted %>%
   filter(Reco_units_FluxData %in% RecoCarea) %>%
   mutate(
     Reco_FluxData_g_m2 = unlist(pmap(list(Reco_FluxData, Reco_units_FluxData, "g / m2"), convertTreeCflux)), #Use Reco units
     Reco_FluxData_g_m2_unit = unlist(pmap(list(Reco_units_FluxData), extractDuration))
   )
 
-PhotosynthesisCareaTmp <- AGB %>%
+PhotosynthesisCareaTmp <- AGB_converted %>%
   filter(Photosynthesis_units_FluxData %in% PhotosynthesisCarea) %>%
   mutate(
     Photosynthesis_FluxData_g_m2 = unlist(pmap(list(Photosynthesis_num_FluxData, Photosynthesis_units_FluxData, "g / m2"), convertTreeCflux)), #Use Photosynthesis units
