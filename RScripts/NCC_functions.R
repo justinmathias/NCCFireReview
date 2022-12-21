@@ -224,7 +224,23 @@ calc_soilC <- function(bdod, soc, hzdept, hzdepb) {
 
 convertTreeCflux <- function(val, from, to) { #Inherits duration from "from"
   #We want all units to be in terms of carbon
-  if (grepl("molC", from) == TRUE) { #If units are in MOLES convert to mass dimensions
+  if (grepl("molCO2", from) == TRUE) { #If units are in MOLES CO2 convert to mass dimensions
+
+    from1 <- stri_replace_all_regex(from, #First remove the C and convert to moles
+                                    pattern=c('CO2', '_per_'), #Values to remove
+                                    replacement=c('', ' / '), #Values to replace with
+                                    vectorize=FALSE)
+    middleTerm <- str_match(from, "_per_(.*?)_per_")[,2] #Extract area term. Note this only works when units before/after
+    duration <- sub('.*_per_', '', from) #Snag the duration to inherit for output
+    molC <- conv_multiunit(x = val, from = from1, to = paste0("mol / ",middleTerm, " / " ,denominator)) #Convert given units to molC
+    gC <- molC*12.01 #Convert moles of carbon to grams of carbon
+    to1 <- paste0(stri_replace_all_regex(to, #Define to units in correct format
+                                         pattern=c('_per_'), #Values to remove
+                                         replacement=c(' / '), #Values to replace with
+                                         vectorize=FALSE), " / ", duration)
+    out <- conv_multiunit(gC, paste0("g / ", middleTerm, " / ", denominator), to1) #Use function from measurements package for conversion
+    out
+  } else if (grepl("molC", from) == TRUE) { #If units are in MOLES  Carbon convert to mass dimensions
     from1 <- stri_replace_all_regex(from, #First remove the C and convert to moles
                                     pattern=c('C', '_per_'), #Values to remove
                                     replacement=c('', ' / '), #Values to replace with
