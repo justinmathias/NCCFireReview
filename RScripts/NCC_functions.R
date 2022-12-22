@@ -209,21 +209,6 @@ convertTreeC <- function(val, from, to) {
 }
 
 
-# Calculate organic carbon stock in Mg ha-1 from SoilGrids database ------------------
-#Uses data returned from fetchSoilGrids using the soilDB package
-calc_soilC <- function(bdod, soc, hzdept, hzdepb) {
-  #bdod: Bulk density of the fine earth fraction in cg/cm^3, need to convert to g/cm^3 first.
-  #soc: Soil organic content in the fine earth fraction in dg/kg, need to convert to g/g first.
-  bdod1 <- bdod*0.01 #g soil per cubic cm
-  soc1 <- soc*0.1/1000 #g C per g soil
-  ocd <- bdod1*soc1 #organic carbon density, g C per cubic cm
-  #hzdept is the soil horizon top depth in cm
-  #hzdepb is the soil horizon bottom depth in cm
-  #Output organic carbon stocks in MgC per ha for the depth layer provided
-  out <- ocd*0.000001*(hzdepb-hzdept)*0.00000001 #MgC per ha
-  out
-}
-
 
 convertTreeCflux <- function(val, from, to) { #Inherits duration from "from"
   #We want all units to be in terms of carbon
@@ -259,6 +244,23 @@ convertTreeCflux <- function(val, from, to) { #Inherits duration from "from"
     out <- conv_multiunit(gC, paste0("g / ", middleTerm, " / ", duration), to1) #Use function from measurements package for conversion
     out
 
+  } else if (grepl("CO2", tst) == TRUE && grepl("molCO2", tst) == FALSE) {#If units are in CO2 by mass, not moles
+
+    val1 <- val*12.01/44.01 #12.01 g C per 44.01 g CO2
+    duration <- sub('.*_per_', '', from) #Snag the duration to inherit for output
+
+    from1 <- stri_replace_all_regex(from,
+                                    pattern=c('CO2', '_per_'), #Values to remove
+                                    replacement=c('', ' / '), #Values to replace with
+                                    vectorize=FALSE)
+    to1 <- paste0(stri_replace_all_regex(to,
+                                         pattern=c('_per_'), #Values to remove
+                                         replacement=c(' / '), #Values to replace with
+                                         vectorize=FALSE), " / ", duration) #Inherit original time frame
+    out <- conv_multiunit(val1, from1, to1) #Use function from measurements package for conversion
+    out
+
+
   } else if (grepl("C", from) == TRUE) { #If the units are already in terms of CARBON, then do simple conversion
     duration <- sub('.*_per_', '', from) #Snag the duration to inherit for output
     from1 <- stri_replace_all_regex(from,
@@ -292,6 +294,24 @@ extractDuration <- function(units_in) {
   duration <- sub('.*_per_', '', units_in) #Snag the duration to inherit for output
   duration
 }
+
+# Calculate organic carbon stock in Mg ha-1 from SoilGrids database ------------------
+#Uses data returned from fetchSoilGrids using the soilDB package
+calc_soilC <- function(bdod, soc, hzdept, hzdepb) {
+  #bdod: Bulk density of the fine earth fraction in cg/cm^3, need to convert to g/cm^3 first.
+  #soc: Soil organic content in the fine earth fraction in dg/kg, need to convert to g/g first.
+  bdod1 <- bdod*0.01 #g soil per cubic cm
+  soc1 <- soc*0.1/1000 #g C per g soil
+  ocd <- bdod1*soc1 #organic carbon density, g C per cubic cm
+  #hzdept is the soil horizon top depth in cm
+  #hzdepb is the soil horizon bottom depth in cm
+  #Output organic carbon stocks in MgC per ha for the depth layer provided
+  out <- ocd*0.000001*(hzdepb-hzdept)*0.00000001 #MgC per ha
+  out
+}
+
+
+
 
 
 # Scaling soil C depth ------------------------------------------------------
