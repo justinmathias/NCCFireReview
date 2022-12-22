@@ -163,7 +163,7 @@ blg <- belowground %>%
 
 
 ##Begin standardization of units----
-#SoilC
+#SoilC on area
 unique(blg$SoilC_Units_StockData)
 soilCarea <-
   c( #For these, only include mass soil per area basis
@@ -187,7 +187,28 @@ soilCareaTmp <- blg %>%
     SoilC3_StockData_Mg_ha = unlist(pmap(list(SoilC3_StockData, SoilC_Units_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
   )
 
-#O layer C
+#SoilC on mass
+unique(blg$SoilC_Units_StockData)
+soilCmass <- c(
+  "percent",
+  "gC_per_kg",
+  "mgC_per_g",
+  "g_per_g",
+  "g_per_kg",
+  "mgC_per_kg",
+  "gC_per_g",
+  "mg_per_g"
+)
+soilCmassTmp <- blg %>%
+  filter(SoilC_Units_StockData %in% soilCmass) %>%
+  mutate(
+    SoilC1_StockData_percent = 100*unlist(pmap(list(SoilC1_StockData, SoilC_Units_StockData, "g / g"), convertSoilC)), #Convert to percent C, pmap is the purrr equivalent to mapply in base R
+    SoilC2_StockData_percent = 100*unlist(pmap(list(SoilC2_StockData, SoilC_Units_StockData, "g / g"), convertSoilC)), #Convert to percent C, pmap is the purrr equivalent to mapply in base R
+    SoilC3_StockData_percent = 100*unlist(pmap(list(SoilC3_StockData, SoilC_Units_StockData, "g / g"), convertSoilC)), #Convert to percent C, pmap is the purrr equivalent to mapply in base R
+  )
+
+
+#O layer C area
 unique(blg$O_lyr_Units_StockData)
 O_lyrarea <- c(
   "gC_per_cm2",
@@ -202,12 +223,26 @@ O_lyrareaTmp <- blg %>%
   mutate(
     O_lyrC_StockData_Mg_ha = unlist(pmap(list(O_lyrC_StockData, O_lyr_Units_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
   )
+#O layer C mass
+unique(blg$O_lyr_Units_StockData)
+O_lyrmass <- c(
+  "percent",
+  "gC_per_kg"
+)
+O_lyrmassTmp <- blg %>%
+  filter(O_lyr_Units_StockData %in% O_lyrmass) %>%
+  mutate(
+    O_lyrC_StockData_percent = 100*unlist(pmap(list(O_lyrC_StockData, O_lyr_Units_StockData, "g / g"), convertSoilC)), #Convert to percent C, pmap is the purrr equivalent to mapply in base R
+  )
+
 
 #Pyrogenic C
 #Don't worry about PyC for now
 unique(blg$PyC_Units_StockData)
 
-#LitterDuff C
+
+
+#LitterDuff C area
 unique(blg$LitterDuff_Units_StockData)
 LitterDuffarea <- c(
   "gC_per_m2",
@@ -223,6 +258,19 @@ LitterDuffareaTmp <- blg %>%
   mutate(
     LitterDuffC_StockData_Mg_ha = unlist(pmap(list(LitterDuffC_StockData, LitterDuff_Units_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
   )
+
+LitterDuffmass <- c(
+  "percent",
+  "g_per_kg",
+  "gC_per_kg"
+)
+LitterDuffmassTmp <- blg %>%
+  filter(LitterDuff_Units_StockData %in% LitterDuffmass) %>%
+  mutate(
+    LitterDuffC_StockData_percent = 100*unlist(pmap(list(LitterDuffC_StockData, LitterDuff_Units_StockData, "g / g"), convertSoilC)), #Convert to percent C, pmap is the purrr equivalent to mapply in base R
+  )
+
+
 
 #Root C
 unique(blg$RootC_Units_StockData)
@@ -242,6 +290,11 @@ RootCareaTmp <- blg %>%
     RootC_StockData_Mg_ha = unlist(pmap(list(RootC_StockData, RootC_Units_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
   )
 
+#No rootC on mass basis
+
+
+
+
 #Microbial biomass C stocks
 unique(blg$MBC_Units_StockData)
 MBCarea <- c(
@@ -253,8 +306,18 @@ MBCareaTmp <- blg %>%
     MBC_StockData_Mg_ha = unlist(pmap(list(MBC_StockData, MBC_Units_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
   )
 
-
-
+MBCmass <- c(
+  "mgC_per_kg",
+  "mgC_per_g",
+  "ugC_per_g",
+  "gC_per_kg",
+  "mg_per_kg"
+)
+MBCmassTmp <- blg %>%
+  filter(MBC_Units_StockData %in% MBCmass) %>%
+  mutate(
+    MBC_StockData_percent = 100*unlist(pmap(list(MBC_StockData, MBC_Units_StockData, "g / g"), convertSoilC)), #Convert to percent C, pmap is the purrr equivalent to mapply in base R
+  )
 
 
 
