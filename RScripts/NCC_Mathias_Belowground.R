@@ -12,7 +12,7 @@ theme_set(theme_article(base_size = 13)) #Set ggplot2 theme
 {belowground <- read.xlsx("/Users/justinmathias/Desktop/Working NCC/belowground_longform_v3.xlsx")
 
 ##Read in biomes shapefile----
-biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
+# biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
 
 ##Append biome to each observation given lat/lon
 belowground <- belowground %>%
@@ -132,8 +132,11 @@ ggsave("SoilPlot.jpg", units = c("in"), width = 3.9, height = 3.25, dpi = 300)
 
 #Begin analysis----
 #Get all data into numeric format----
-belowground %>%
-  mutate( #Convert all values to numeric, removing accompanying standard errors.
+blg <- belowground %>%
+  mutate(
+    SoilC1_Depth_cm_StockData = as.numeric(SoilC1_Depth_cm_StockData), #Assign soil depths as numeric
+    SoilC2_Depth_cm_StockData = as.numeric(SoilC2_Depth_cm_StockData),
+    SoilC3_Depth_cm_StockData = as.numeric(SoilC3_Depth_cm_StockData),
     SoilC1_StockData = sep.data(., in_col = SoilC1_StockData, return = "Value"), #Convert Stocks to numeric, return only value and remove associated std error
     SoilC2_StockData = sep.data(., in_col = SoilC2_StockData, return = "Value"),
     SoilC3_StockData = sep.data(., in_col = SoilC3_StockData, return = "Value"),
@@ -158,39 +161,11 @@ belowground %>%
     TotalBelowground_Emissions = sep.data(., in_col = TotalBelowground_Emissions, return = "Value"),
   )
 
-SoilC1_StockData
-SoilC2_StockData
-SoilC3_StockData
-O_lyrC_StockData
-PyC_StockData
-LitterDuffC_StockData
-RootC_StockData
-MBC_StockData
-BD_gcm3_StockData
-Rs_FluxData
-Rh_FluxData
-Ra_FluxData
-CH4_FluxData
-MRT_active_FluxData
-MRT_passive_FluxData
-MRT_total_FluxData
-PeatAccumulationRate_FluxData
-CO2mic_text
-BurnDepth_cm_Emissions
-Soil_Emissions
-Litter_Emissions
-Roots_Emissions
-TotalBelowground_Emissions
 
-
-
-#What units are given in spreadsheet for soil C?
-unique(belowground$SoilC_Units)
-unique(belowground$SoilC1_Depth_cm)
-
-##Workup soilC on area basis----
-###Define units to include on area basis----
-soilCareainclude <-
+##Begin standardization of units----
+#SoilC
+unique(blg$SoilC_Units_StockData)
+soilCarea <-
   c( #For these, only include mass soil per area basis
     "kgC_per_m2",
     "gC_per_m2",
@@ -203,17 +178,83 @@ soilCareainclude <-
     "molC_per_m2"
     )
 
-soilCmassinclude <- c(
-  "percent",
-  "gC_per_kg",
-  "gC_per_g",
-  "g_per_kg",
-  "mgC_per_g",
-  "g_per_g",
-  "mgC_per_gram",
-  "mg_per_g",
-  "mgC_per_kg"
+soilCareaTmp <- blg %>%
+  filter(SoilC_Units_StockData %in% soilCarea) %>%
+  mutate(
+    SoilC1_StockData_Mg_ha = unlist(pmap(list(SoilC1_StockData, SoilC_Units_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
+    SoilC1_StockData_Mg_ha_scaled = scale.depth(SoilC1_StockData_Mg_ha, SoilC1_Depth_cm_StockData), #Scale based on proportion of C at depth
+    SoilC2_StockData_Mg_ha = unlist(pmap(list(SoilC2_StockData, SoilC_Units_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
+    SoilC3_StockData_Mg_ha = unlist(pmap(list(SoilC3_StockData, SoilC_Units_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
   )
+
+#O layer C
+unique(blg$O_lyr_Units_StockData)
+O_lyrarea <- c(
+  "gC_per_cm2",
+  "kgC_per_m2",
+  "mgC_per_hectare",
+  "MgC_per_hectare",
+  "kg_per_m2",
+  "molC_per_m2"
+)
+O_lyrareaTmp <- blg %>%
+  filter(O_lyr_Units_StockData %in% O_lyrarea) %>%
+  mutate(
+    O_lyrC_StockData_Mg_ha = unlist(pmap(list(O_lyrC_StockData, O_lyr_Units_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
+  )
+
+#Pyrogenic C
+#Don't worry about PyC for now
+unique(blg$PyC_Units_StockData)
+
+#LitterDuff C
+unique(blg$LitterDuff_Units_StockData)
+LitterDuffarea <- c(
+  "gC_per_m2",
+  "kg_per_m2",
+  "MgC_per_hectare",
+  "g_per_m2",
+  "kg_per_hectare",
+  "kgC_per_m2",
+  "molC_per_m2"
+)
+LitterDuffareaTmp <- blg %>%
+  filter(LitterDuff_Units_StockData %in% LitterDuffarea) %>%
+  mutate(
+    LitterDuffC_StockData_Mg_ha = unlist(pmap(list(LitterDuffC_StockData, LitterDuff_Units_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
+  )
+
+#Root C
+unique(blg$RootC_Units_StockData)
+RootCarea <- c(
+  "g_per_m2",
+  "gC_per_m2",
+  "MgC_per_hectare",
+  "Mg_per_hectare",
+  "kg_per_m2",
+  "metric_ton_per_hectare",
+  "metric_tonC_per_hectare",
+  "molC_per_m2"
+)
+RootCareaTmp <- blg %>%
+  filter(RootC_Units_StockData %in% RootCarea) %>%
+  mutate(
+    RootC_StockData_Mg_ha = unlist(pmap(list(RootC_StockData, RootC_Units_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
+  )
+
+#Microbial biomass C stocks
+unique(blg$MBC_Units_StockData)
+MBCarea <- c(
+  "gC_per_m2"
+)
+MBCareaTmp <- blg %>%
+  filter(MBC_Units_StockData %in% MBCarea) %>%
+  mutate(
+    MBC_StockData_Mg_ha = unlist(pmap(list(MBC_StockData, MBC_Units_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
+  )
+
+
+
 
 
 
@@ -225,9 +266,7 @@ soilCarea <- belowground %>% filter(SoilC_Units_StockData %in% soilCareainclude)
 soilCarea <- soilCarea %>%
   mutate(
     UniqueID = paste0(RecordID, "_", RecordSubID_new), #Create UniqueID based off of RecordID and RecordSubID
-    SoilC1_Depth_cm_StockData = as.numeric(SoilC1_Depth_cm_StockData), #Assign soil depths as numeric
-    SoilC2_Depth_cm_StockData = as.numeric(SoilC2_Depth_cm_StockData),
-    SoilC3_Depth_cm_StockData = as.numeric(SoilC3_Depth_cm_StockData)
+
   ) %>%
   drop_na(SoilC1_Depth_cm_StockData) #Remove NA values
 
@@ -312,6 +351,18 @@ soilCmassinclude <-
     "g_per_kg",
     "g_per_g",
     "mg_per_g"
+  )
+
+  soilCmassinclude <- c(
+    "percent",
+    "gC_per_kg",
+    "gC_per_g",
+    "g_per_kg",
+    "mgC_per_g",
+    "g_per_g",
+    "mgC_per_g",
+    "mg_per_g",
+    "mgC_per_kg"
   )
 
 soilCmass <- belowground %>% filter(SoilC_Units_Control_StockData %in% soilCmassinclude)
