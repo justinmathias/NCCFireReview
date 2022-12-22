@@ -116,7 +116,10 @@ sep.coords <- function(dat, in_col, return = "LatLon") {
 #We will rely on the 'measurements' package to do the heavy lifting
 convertSoilC <- function(val, from, to) {
   #We want all units to be in terms of carbon
-  if (grepl("molC", from) == TRUE) { #If units are in MOLES convert dimensions
+  if (from == "percent" && to == "g / g") {#This chunk allows us to work with percents
+    out <- val/100
+    out
+  } else if (grepl("molC", from) == TRUE) { #If units are in MOLES convert dimensions
     from1 <- stri_replace_all_regex(from, #First remove the C and convert to moles
                                     pattern=c('C', '_per_'), #Values to remove
                                     replacement=c('', ' / '), #Values to replace with
