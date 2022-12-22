@@ -131,6 +131,59 @@ ggsave("SoilPlot.jpg", units = c("in"), width = 3.9, height = 3.25, dpi = 300)
 
 
 #Begin analysis----
+#Get all data into numeric format----
+belowground %>%
+  mutate( #Convert all values to numeric, removing accompanying standard errors.
+    SoilC1_StockData = sep.data(., in_col = SoilC1_StockData, return = "Value"), #Convert Stocks to numeric, return only value and remove associated std error
+    SoilC2_StockData = sep.data(., in_col = SoilC2_StockData, return = "Value"),
+    SoilC3_StockData = sep.data(., in_col = SoilC3_StockData, return = "Value"),
+    O_lyrC_StockData = sep.data(., in_col = O_lyrC_StockData, return = "Value"),
+    PyC_StockData = sep.data(., in_col = PyC_StockData, return = "Value"),
+    LitterDuffC_StockData = sep.data(., in_col = LitterDuffC_StockData, return = "Value"),
+    RootC_StockData = sep.data(., in_col = RootC_StockData, return = "Value"),
+    MBC_StockData = sep.data(., in_col = MBC_StockData, return = "Value"),
+    BD_gcm3_StockData = sep.data(., in_col = BD_gcm3_StockData, return = "Value"),
+    Rs_FluxData = sep.data(., in_col = Rs_FluxData, return = "Value"),
+    Rh_FluxData = sep.data(., in_col = Rh_FluxData, return = "Value"),
+    Ra_FluxData = sep.data(., in_col = Ra_FluxData, return = "Value"),
+    CH4_FluxData = sep.data(., in_col = CH4_FluxData, return = "Value"),
+    MRT_active_FluxData = sep.data(., in_col = MRT_active_FluxData, return = "Value"),
+    MRT_passive_FluxData = sep.data(., in_col = MRT_passive_FluxData, return = "Value"),
+    MRT_total_FluxData = sep.data(., in_col = MRT_total_FluxData, return = "Value"),
+    PeatAccumulationRate_FluxData = sep.data(., in_col = PeatAccumulationRate_FluxData, return = "Value"),
+    BurnDepth_cm_Emissions = sep.data(., in_col = BurnDepth_cm_Emissions, return = "Value"),
+    Soil_Emissions = sep.data(., in_col = Soil_Emissions, return = "Value"),
+    Litter_Emissions = sep.data(., in_col = Litter_Emissions, return = "Value"),
+    Roots_Emissions = sep.data(., in_col = Roots_Emissions, return = "Value"),
+    TotalBelowground_Emissions = sep.data(., in_col = TotalBelowground_Emissions, return = "Value"),
+  )
+
+SoilC1_StockData
+SoilC2_StockData
+SoilC3_StockData
+O_lyrC_StockData
+PyC_StockData
+LitterDuffC_StockData
+RootC_StockData
+MBC_StockData
+BD_gcm3_StockData
+Rs_FluxData
+Rh_FluxData
+Ra_FluxData
+CH4_FluxData
+MRT_active_FluxData
+MRT_passive_FluxData
+MRT_total_FluxData
+PeatAccumulationRate_FluxData
+CO2mic_text
+BurnDepth_cm_Emissions
+Soil_Emissions
+Litter_Emissions
+Roots_Emissions
+TotalBelowground_Emissions
+
+
+
 #What units are given in spreadsheet for soil C?
 unique(belowground$SoilC_Units)
 unique(belowground$SoilC1_Depth_cm)
@@ -167,24 +220,21 @@ soilCmassinclude <- c(
 
 
 
-
-
-)
-
-
-###Tidy data to create UniqueID and remove NA values
-soilCarea <- belowground %>% filter(SoilC_Units_Control_StockData %in% soilCareainclude) #Filter belowground tab to only include soilC on area basis
+###Tidy data to create UniqueID and remove NA values----
+soilCarea <- belowground %>% filter(SoilC_Units_StockData %in% soilCareainclude) #Filter belowground tab to only include soilC on area basis
 soilCarea <- soilCarea %>%
   mutate(
-    UniqueID = paste0(RecordID, "_", RecordSubID), #Create UniqueID based off of RecordID and RecordSubID
-    SoilC1_Depth_cm_Control_StockData = as.numeric(SoilC1_Depth_cm_Control_StockData) #Assign soil depth as numeric
+    UniqueID = paste0(RecordID, "_", RecordSubID_new), #Create UniqueID based off of RecordID and RecordSubID
+    SoilC1_Depth_cm_StockData = as.numeric(SoilC1_Depth_cm_StockData), #Assign soil depths as numeric
+    SoilC2_Depth_cm_StockData = as.numeric(SoilC2_Depth_cm_StockData),
+    SoilC3_Depth_cm_StockData = as.numeric(SoilC3_Depth_cm_StockData)
   ) %>%
-  drop_na(SoilC1_Depth_cm_Control_StockData) #Remove NA values
+  drop_na(SoilC1_Depth_cm_StockData) #Remove NA values
 
 ###Scale given soil C stocks to 0-5cm depth
 SoilCarea <- soilCarea %>% #Work with soil C on area basis
   drop_na( #Drop rows where NA exists (i.e. no data) for the following columns
-    SoilC1_Depth_cm_Control_StockData
+    SoilC1_Depth_cm_StockData
   ) %>%
   mutate( #Extract value from all records.
     SoilC1_Control_StockData = sep.data(., in_col = SoilC1_Control_StockData, return = "Value"), #Use custom function to return numeric values
@@ -193,8 +243,8 @@ SoilCarea <- soilCarea %>% #Work with soil C on area basis
   mutate( #Convert soilC stocks to MgC_per_ha
     SoilC1_Control_StockData_MgC_ha = unlist(pmap(list(SoilC1_Control_StockData, SoilC_Units_Control_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
     SoilC1_Burned1_StockData_MgC_ha = unlist(pmap(list(SoilC1_Burned1_StockData, SoilC_Units_Control_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
-    SoilC1_Control_StockData_MgC_ha_scaled = scale.depth(SoilC1_Control_StockData_MgC_ha, SoilC1_Depth_cm_Control_StockData), #Scale based on proportion of C at depth
-    SoilC1_Burned1_StockData_MgC_ha_scaled = scale.depth(SoilC1_Burned1_StockData_MgC_ha, SoilC1_Depth_cm_Control_StockData), #Scale based on proportion of C at depth
+    SoilC1_Control_StockData_MgC_ha_scaled = scale.depth(SoilC1_Control_StockData_MgC_ha, SoilC1_Depth_cm_StockData), #Scale based on proportion of C at depth
+    SoilC1_Burned1_StockData_MgC_ha_scaled = scale.depth(SoilC1_Burned1_StockData_MgC_ha, SoilC1_Depth_cm_StockData), #Scale based on proportion of C at depth
     SoilC1_Delta_MgC_ha_scaled = (SoilC1_Burned1_StockData_MgC_ha_scaled - SoilC1_Control_StockData_MgC_ha_scaled)
   )
 
