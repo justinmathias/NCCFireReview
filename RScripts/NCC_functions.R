@@ -235,7 +235,7 @@ convertTreeCflux <- function(val, from, to) { #Inherits duration from "from"
     duration <- sub('.*_per_', '', from) #Snag the duration to inherit for output
 
     from1 <- stri_replace_all_regex(from,
-                                    pattern=c('CO2', '_per_'), #Values to remove
+                                    pattern=c('CH4', '_per_'), #Values to remove
                                     replacement=c('', ' / '), #Values to replace with
                                     vectorize=FALSE)
     to1 <- paste0(stri_replace_all_regex(to,
