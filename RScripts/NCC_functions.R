@@ -212,7 +212,41 @@ convertTreeC <- function(val, from, to) {
 
 convertTreeCflux <- function(val, from, to) { #Inherits duration from "from"
   #We want all units to be in terms of carbon
-  if (grepl("molCO2", from) == TRUE) { #If units are in MOLES CO2 convert to mass dimensions
+  if (grepl("molCH4", from) == TRUE) {#Deal with CH4 fluxes by moles
+
+    from1 <- stri_replace_all_regex(from, #First remove the C and convert to moles
+                                    pattern=c('CH4', '_per_'), #Values to remove
+                                    replacement=c('', ' / '), #Values to replace with
+                                    vectorize=FALSE)
+    middleTerm <- str_match(from, "_per_(.*?)_per_")[,2] #Extract area term. Note this only works when units before/after
+    duration <- sub('.*_per_', '', from) #Snag the duration to inherit for output
+    molC <- conv_multiunit(x = val, from = from1, to = paste0("mol / ",middleTerm, " / " ,duration)) #Convert given units to molC
+    gC <- molC*16.04 #Convert moles of carbon to grams of carbon
+    to1 <- paste0(stri_replace_all_regex(to, #Define to units in correct format
+                                         pattern=c('_per_'), #Values to remove
+                                         replacement=c(' / '), #Values to replace with
+                                         vectorize=FALSE), " / ", duration)
+    out <- conv_multiunit(gC, paste0("g / ", middleTerm, " / ", duration), to1) #Use function from measurements package for conversion
+    out
+
+  } else if (grepl("CH4", from) == TRUE && grepl("mol", from) == FALSE){ #If units are CH4 by mass
+
+    val1 <- val*12.01/16.04 #12.01 g C per 16.04 g CH4
+    duration <- sub('.*_per_', '', from) #Snag the duration to inherit for output
+
+    from1 <- stri_replace_all_regex(from,
+                                    pattern=c('CO2', '_per_'), #Values to remove
+                                    replacement=c('', ' / '), #Values to replace with
+                                    vectorize=FALSE)
+    to1 <- paste0(stri_replace_all_regex(to,
+                                         pattern=c('_per_'), #Values to remove
+                                         replacement=c(' / '), #Values to replace with
+                                         vectorize=FALSE), " / ", duration) #Inherit original time frame
+    out <- conv_multiunit(val1, from1, to1) #Use function from measurements package for conversion
+    out
+
+
+  } else if (grepl("molCO2", from) == TRUE) { #If units are in MOLES CO2 convert to mass dimensions
 
     from1 <- stri_replace_all_regex(from, #First remove the C and convert to moles
                                     pattern=c('CO2', '_per_'), #Values to remove
@@ -244,7 +278,7 @@ convertTreeCflux <- function(val, from, to) { #Inherits duration from "from"
     out <- conv_multiunit(gC, paste0("g / ", middleTerm, " / ", duration), to1) #Use function from measurements package for conversion
     out
 
-  } else if (grepl("CO2", tst) == TRUE && grepl("molCO2", tst) == FALSE) {#If units are in CO2 by mass, not moles
+  } else if (grepl("CO2", from) == TRUE && grepl("molCO2", from) == FALSE) {#If units are in CO2 by mass, not moles
 
     val1 <- val*12.01/44.01 #12.01 g C per 44.01 g CO2
     duration <- sub('.*_per_', '', from) #Snag the duration to inherit for output
