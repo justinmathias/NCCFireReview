@@ -12,7 +12,7 @@ theme_set(theme_article(base_size = 13)) #Set ggplot2 theme
 {belowground <- read.xlsx("/Users/justinmathias/Desktop/Working NCC/belowground_longform_v3.xlsx")
 
 ##Read in biomes shapefile----
-# biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
+biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
 
 ##Append biome to each observation given lat/lon
 belowground <- belowground %>%
@@ -320,158 +320,101 @@ MBCmassTmp <- blg %>%
   )
 
 
+# Work up fluxes ----------------------------------------------------------
+#Identify fluxes unique units and define which to include on area basis
+unique(blg$SrespUnits_FluxData)
+Rs_Fluxarea <- c(
+  "umolCO2_per_m2_per_sec",
+  "MgCO2_per_hectare_per_yr",
+  "mgC_per_m2_per_hr",
+  "gC_per_m2_per_day",
+  "mgC_per_m2_per_hr",
+  "gC_per_m2_per_hr",
+  "mgCO2_per_m2_per_sec",
+  "ugCO2_per_m2_per_sec",
+  "MgCO2_per_hectare_per_yr",
+  "metric_tonC_per_hectare_per_yr",
+  "gCO2_per_m2_per_hr",
+  "gCO2_per_m2_per_day",
+  "MgC_per_hectare_per_year",
+  "gC_per_m2_per_yr"
+)
 
 
-
-
-###Tidy data to create UniqueID and remove NA values----
-soilCarea <- belowground %>% filter(SoilC_Units_StockData %in% soilCareainclude) #Filter belowground tab to only include soilC on area basis
-soilCarea <- soilCarea %>%
+Rs_FluxDataareaTmp <- blg %>%
+  filter(SrespUnits_FluxData %in% Rs_Fluxarea) %>%
   mutate(
-    UniqueID = paste0(RecordID, "_", RecordSubID_new), #Create UniqueID based off of RecordID and RecordSubID
-
-  ) %>%
-  drop_na(SoilC1_Depth_cm_StockData) #Remove NA values
-
-###Scale given soil C stocks to 0-5cm depth
-SoilCarea <- soilCarea %>% #Work with soil C on area basis
-  drop_na( #Drop rows where NA exists (i.e. no data) for the following columns
-    SoilC1_Depth_cm_StockData
-  ) %>%
-  mutate( #Extract value from all records.
-    SoilC1_Control_StockData = sep.data(., in_col = SoilC1_Control_StockData, return = "Value"), #Use custom function to return numeric values
-    SoilC1_Burned1_StockData = sep.data(., in_col = SoilC1_Burned1_StockData, return = "Value"), #Use custom function to return numeric values
-  ) %>%
-  mutate( #Convert soilC stocks to MgC_per_ha
-    SoilC1_Control_StockData_MgC_ha = unlist(pmap(list(SoilC1_Control_StockData, SoilC_Units_Control_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
-    SoilC1_Burned1_StockData_MgC_ha = unlist(pmap(list(SoilC1_Burned1_StockData, SoilC_Units_Control_StockData, "Mg / hectare"), convertSoilC)), #Convert to MgC per ha, pmap is the purrr equivalent to mapply in base R
-    SoilC1_Control_StockData_MgC_ha_scaled = scale.depth(SoilC1_Control_StockData_MgC_ha, SoilC1_Depth_cm_StockData), #Scale based on proportion of C at depth
-    SoilC1_Burned1_StockData_MgC_ha_scaled = scale.depth(SoilC1_Burned1_StockData_MgC_ha, SoilC1_Depth_cm_StockData), #Scale based on proportion of C at depth
-    SoilC1_Delta_MgC_ha_scaled = (SoilC1_Burned1_StockData_MgC_ha_scaled - SoilC1_Control_StockData_MgC_ha_scaled)
+    Rs_FluxData_g_m2 = unlist(pmap(list(Rs_FluxData, SrespUnits_FluxData, "g / m2"), convertTreeCflux)), #Use ANPP units
+    Rs_FluxData_g_m2_unit = unlist(pmap(list(SrespUnits_FluxData), extractDuration))
   )
 
-###Quick simple stats
-#soilStat1 <-
-SoilCarea %>%
-  dplyr::select(Biome,
-                     SoilC1_Control_StockData_MgC_ha_scaled,
-                     SoilC1_Burned1_StockData_MgC_ha_scaled) %>%
-  pivot_longer(names_to = "Case", values_to = "SoilC_Mg_ha", -Biome) %>%
-  ggplot(aes(x = Biome, y = SoilC_Mg_ha, color = Case)) +
-  geom_jitter(alpha = 0.5) +
-  geom_boxplot(alpha = 0)+
-  coord_flip() +
-  theme(legend.position = "bottom")
-
-SoilCarea %>%
-  dplyr::select(Biome,
-                SoilC1_Control_StockData_MgC_ha_scaled,
-                SoilC1_Burned1_StockData_MgC_ha_scaled) %>%
-  mutate(SoilCDelta = (SoilC1_Burned1_StockData_MgC_ha_scaled-SoilC1_Control_StockData_MgC_ha_scaled)) %>%
-  ggplot(aes(x = Biome, y = SoilCDelta)) +
-  geom_jitter(alpha = 0.5) +
-  geom_boxplot(alpha = 0) +
-  coord_flip() +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  theme(legend.position = "none")
-
-SoilCarea %>%
-  dplyr::select(Biome,
-                SoilC1_Control_StockData_MgC_ha_scaled,
-                SoilC1_Burned1_StockData_MgC_ha_scaled) %>%
-  mutate(SoilCDelta = (SoilC1_Burned1_StockData_MgC_ha_scaled-SoilC1_Control_StockData_MgC_ha_scaled)) %>%
-  ggplot(aes(x = SoilCDelta)) +
-  geom_density() +
-  geom_vline(xintercept = 0, linetype = "dashed")
-
-x <- SoilCarea %>%
-  dplyr::select(SoilC1_Control_StockData_MgC_ha_scaled,
-                SoilC1_Burned1_StockData_MgC_ha_scaled) %>%
-  mutate(SoilCDelta = (SoilC1_Burned1_StockData_MgC_ha_scaled-SoilC1_Control_StockData_MgC_ha_scaled)) %>%
-  dplyr::select(SoilCDelta)
-
-t.test(x) #Is mean soilCDelta significantly different from 0? Yes
 
 
+unique(blg$SrespUnits_FluxData)
+Ra_Fluxarea <- c(
+  "umolCO2_per_m2_per_sec",
+  "MgCO2_per_hectare_per_yr",
+  "mgC_per_m2_per_hr",
+  "gC_per_m2_per_day",
+  "mgC_per_m2_per_hr",
+  "gC_per_m2_per_hr",
+  "mgCO2_per_m2_per_sec",
+  "ugCO2_per_m2_per_sec",
+  "MgCO2_per_hectare_per_yr",
+  "metric_tonC_per_hectare_per_yr",
+  "gCO2_per_m2_per_hr",
+  "gCO2_per_m2_per_day",
+  "MgC_per_hectare_per_year",
+  "gC_per_m2_per_yr"
+)
 
 
-summary(aov(SoilC_Mg_ha ~ Case, data = soilStat1))
-
-
-  ggplot(aes(y = SoilC1_Delta2)) +
-  geom_density() +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  coord_flip()
-
-##Workup soilC on mass basis----
-soilCmassinclude <-
-  c( #For these, only include mass soil per mass basis
-    "gC_per_kg",
-    "gC_per_g",
-    "mgC_per_g",
-    "mgC_per_kg",
-    "mgC_per_g",
-    "g_per_kg",
-    "g_per_g",
-    "mg_per_g"
-  )
-
-  soilCmassinclude <- c(
-    "percent",
-    "gC_per_kg",
-    "gC_per_g",
-    "g_per_kg",
-    "mgC_per_g",
-    "g_per_g",
-    "mgC_per_g",
-    "mg_per_g",
-    "mgC_per_kg"
-  )
-
-soilCmass <- belowground %>% filter(SoilC_Units_Control_StockData %in% soilCmassinclude)
-soilCmass <-soilCmass %>%
+Ra_FluxDataareaTmp <- blg %>%
+  filter(SrespUnits_FluxData %in% Ra_Fluxarea) %>%
   mutate(
-    UniqueID = paste0(RecordID, "_", RecordSubID),
-    SoilC1_Depth_cm_Control_StockData = as.numeric(SoilC1_Depth_cm_Control_StockData)
-  ) %>%
-  drop_na(SoilC1_Depth_cm_Control_StockData)
-
-#SoilCmass <-
-soilCmass %>% #Work with soil C on area basis
-  drop_na( #Drop rows where NA exists (i.e. no data)
-    SoilC1_Depth_cm_Control_StockData,
-    SoilC1_Control_StockData,
-    SoilC1_Burned1_StockData
-  ) %>%
-  mutate( #Extract value from all records. Records generally given
-    SoilC1_Control_StockData = sep.data(., in_col = SoilC1_Control_StockData), #Use custom function to return numeric values
-    SoilC1_Burned1_StockData = sep.data(., in_col = SoilC1_Burned1_StockData), #Use custom function to return numeric values
-  ) %>%
-  dplyr::select(
-    UniqueID,
-    SoilC_Units_Control_StockData,
-    SoilC1_Depth_cm_Control_StockData,
-    SoilC1_Control_StockData,
-    SoilC1_Burned1_StockData
-  ) %>%
-  # filter(UniqueID != "1530_1", UniqueID != "837_1") %>%
-  mutate( #Convert soilC stocks to g_per_g
-    SoilC1_Control_StockData_g_per_g = unlist(pmap(list(SoilC1_Control_StockData, SoilC_Units_Control_StockData, "g / g"), convertSoilC)), #Convert to g per g, pmap is the purrr equivalent to mapply in base R
-    SoilC1_Burned1_StockData_g_per_g = unlist(pmap(list(SoilC1_Burned1_StockData, SoilC_Units_Control_StockData, "g / g"), convertSoilC)), #Convert to g per g, pmap is the purrr equivalent to mapply in base R
-    SoilC1_Control_scaled = scale.depth(SoilC1_Control_StockData_g_per_g, SoilC1_Depth_cm_Control_StockData),
-    SoilC1_Burned_scaled = scale.depth(SoilC1_Burned1_StockData_g_per_g, SoilC1_Depth_cm_Control_StockData),
-    SoilC1_percentChange = percentchange(SoilC1_Burned_scaled, SoilC1_Control_scaled)
-  ) #%>%
-ggplot(aes(y = SoilC1_percentChange)) +
-  geom_density() +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  coord_flip()
+    Ra_FluxData_g_m2 = unlist(pmap(list(Ra_FluxData, SrespUnits_FluxData, "g / m2"), convertTreeCflux)), #Use ANPP units
+    Ra_FluxData_g_m2_unit = unlist(pmap(list(SrespUnits_FluxData), extractDuration))
+  )
 
 
+#CH4 fluxes
+unique(blg$CH4Units_FluxData)
+CH4_Fluxarea <- c(
+  "mgC_per_m2_per_hr",
+  "mgCH4_per_m2_per_sec",
+  "MgCH4_per_hectare_per_yr",
+  "mgCH4_per_m2_per_day",
+  "umolCH4_per_m2_per_sec",
+  "ugCH4_per_m2_per_sec",
+  "ugC_per_m2_per_hr"
+)
 
-belowground %>% filter(SoilC_Units_Control_StockData == "percent") %>% dplyr::select(SoilC1_Control_StockData)
+CH4_FluxDataareaTmp <- blg %>%
+  filter(CH4Units_FluxData %in% CH4_Fluxarea) %>%
+  mutate(
+    CH4_FluxData_g_m2 = unlist(pmap(list(CH4_FluxData, CH4Units_FluxData, "g / m2"), convertTreeCflux)), #Use ANPP units
+    CH4_FluxData_g_m2_unit = unlist(pmap(list(CH4Units_FluxData), extractDuration))
+  )
 
 
-convertSoilC(5, "gC_per_kg", "g / g")
+#Peat accumulation rate
+unique(blg$PeatAccumulationRate_units_FluxData)
+PeatAccumulationRatearea <- c(
+  "gC_per_m2_per_yr"
+)
+
+PeatAccumulationRateareaTmp <- blg %>%
+  filter(PeatAccumulationRate_units_FluxData %in% PeatAccumulationRatearea) %>%
+  mutate(
+    PeatAccumulationRate_FluxData_g_m2 = unlist(pmap(list(PeatAccumulationRate_FluxData, PeatAccumulationRate_units_FluxData, "g / m2"), convertTreeCflux)), #Use ANPP units
+    PeatAccumulationRate_FluxData_g_m2_unit = unlist(pmap(list(PeatAccumulationRate_units_FluxData), extractDuration))
+  )
 
 
+BLG_converted_final <- list(blg, soilCareaTmp, soilCmassTmp, O_lyrareaTmp, O_lyrmassTmp,
+                            LitterDuffareaTmp, LitterDuffmassTmp, RootCareaTmp, MBCareaTmp, MBCmassTmp, Rs_FluxDataareaTmp, Ra_FluxDataareaTmp, CH4_FluxDataareaTmp, PeatAccumulationRateareaTmp) %>%
+  reduce(left_join)
+
+
+setwd("/Users/justinmathias/Desktop/Working NCC")
+write.xlsx(BLG_converted_final, "BelowgroundConverted.xlsx")
