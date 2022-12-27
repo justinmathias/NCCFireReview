@@ -384,6 +384,8 @@ TEC_converted_final <- list(TEC,
                             TotemissionsTmp) %>%
   reduce(left_join)
 
+setwd("/Users/justinmathias/Desktop/Working NCC")
+write.xlsx(TEC_converted_final, "TECConverted.xlsx")
 
 
 
