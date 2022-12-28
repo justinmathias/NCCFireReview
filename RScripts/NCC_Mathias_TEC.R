@@ -9,7 +9,7 @@
 
 #Load in data
 tec <- read.xlsx("/Users/justinmathias/Desktop/Working NCC/TotalEcoC_longform_v3.xlsx")
-
+#biomes <- readOGR("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
 
 # Housekeeping, convert lat/lon, assign columns as numeric, extract values -------------------------------------------
 ##Create UniqueID and separate Lat/Lon----
@@ -18,6 +18,37 @@ tec <- tec %>%
   sep.coords(LatLon) %>% #First separate Latitude and Longitude
   mutate(Lat = as.numeric(Lat), #Make sure numeric
          Lon = as.numeric(Lon))
+
+
+##Add in biomes----
+TEC_biomes <- tec %>%
+  drop_na(Lat, Lon)
+
+#Create a new dataframe, coords, so we can extract data from AGB_converted
+coords <- data.frame(TEC_biomes$Lon, TEC_biomes$Lat)
+coords.sp <- SpatialPoints(coords) #Coords need to be LongLat
+proj4string(coords.sp) = proj4string(biomes) #Need to make sure coordinates match.
+#Extract biome information.
+TEC_biomes <- cbind(TEC_biomes, over(coords.sp, biomes)$BIOME_NAME)
+#Rename biome column
+names(TEC_biomes)[names(TEC_biomes) == "over(coords.sp, biomes)$BIOME_NAME"] <- "Biome"
+tec <- left_join(tec, TEC_biomes) #Join back together
+
+#Create lookuptable
+lookup.table <- c("Tropical & Subtropical Moist Broadleaf Forests" = "TropicalForest",
+                  "Tropical & Subtropical Dry Broadleaf Forests" = "TropicalForest",
+                  "Tropical & Subtropical Coniferous Forests" = "TropicalForest",
+                  'Temperate Broadleaf & Mixed Forests' = "TemperateForest",
+                  "Temperate Conifer Forests" = "TemperateForest",
+                  "Boreal Forests/Taiga" = "AlpineBorealForest",
+                  "Tropical & Subtropical Grasslands, Savannas & Shrublands" = "TropicalGrassland",
+                  "Temperate Grasslands, Savannas & Shrublands" = "TemperateGrassland",
+                  "Flooded Grasslands & Savannas" = "FloodedGrassland",
+                  "Montane Grasslands & Shrublands" = "AlpineBorealForest",
+                  "Tundra" = "AlpineBorealForest",
+                  "Mediterranean Forests, Woodlands & Scrub" = "Mediterranean",
+                  "Deserts & Xeric Shrublands" = "Desert")
+tec$Biome_simple <- lookup.table[tec$Biome]
 
 ##Get all data into numeric format
 TEC <- tec %>%
