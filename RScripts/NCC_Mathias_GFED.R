@@ -907,6 +907,7 @@ SAVApercent <- SAVAsum/TOTALemissions*100
 AGRIpercent <- AGRIsum/TOTALemissions*100
 DEFOpercent <- DEFOsum/TOTALemissions*100
 
+
 GFEDemissions <- data.frame("Biome" = c("BORF",
                                         "TEMF",
                                         "SAVA",
@@ -925,13 +926,62 @@ GFEDemissions <- data.frame("Biome" = c("BORF",
                                                     PEATpercent,
                                                     DEFOpercent,
                                                     AGRIpercent))
+
+
+
+#Create quick df to autoplace percents over columns
+
+placement <- GFEDemissions %>% #We want to create a dataframe to assign the position of the C emissions
+  group_by(Biome) %>%
+  mutate(PlacementValue = Emissions_TgC + 12)
+
+GFEDemissions <- left_join(GFEDemissions, placement) %>% mutate(Emissions_percent = round(Emissions_percent, 0))
+
+
+
+
 GFEDemissions %>%
   filter(Biome != "AGRI", Biome != "DEFO") %>%
   ggplot(aes(x = reorder(Biome, -Emissions_TgC, mean), y = Emissions_TgC)) +
   geom_col(aes(fill = Biome), alpha = 0.95, width = 0.75) +
   xlab("Biome") +
   ylab("C Emissions (Tg)") +
-  theme(legend.position = "none")
+  theme(
+    legend.position = "none",
+    legend.title = element_text(size = 11, family = "Arial"),
+    legend.text = element_text(size = 11, family = "Arial"),
+    legend.background = element_blank(),
+    axis.title.x = element_text(
+      color = "black",
+      size = 14,
+      family = "Arial"
+    ),
+    axis.title.y = element_text(
+      color = "black",
+      size = 14,
+      family = "Arial"
+    ),
+    axis.text = element_text(
+      color = "black",
+      size = 14,
+      family = "Arial"
+    ),
+    panel.border = element_rect(
+      colour = "black",
+      fill = NA,
+      size = .9
+    ),
+    plot.tag = element_text(
+      family = "Arial",
+      size = 14,
+      face = "bold"
+    )
+  ) +
+  scale_fill_tableau() +
+  geom_text(aes(y = PlacementValue, label = Emissions_percent), size = 4, color = "black", fontface = "bold")
+
+
+
 
 
 
