@@ -416,7 +416,7 @@ TEC_converted_final <- list(TEC,
   reduce(left_join)
 
 setwd("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Data/Converted files")
-write.xlsx(TEC_converted_final, "TECConverted_GFED.csv")
+write.csv(TEC_converted_final, "TECConverted_GFED.csv")
 
 
 
