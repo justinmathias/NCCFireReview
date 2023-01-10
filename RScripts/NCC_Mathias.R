@@ -5,7 +5,7 @@
 library("easypackages")
 libraries(c("terra", "ggsci", "ggthemes", "RColorBrewer", "measurements", "stringr", "rayshader", "egg", "rgdal", "openxlsx", "shiny", "shinydashboard",
             "plotly", "wordcloud", "tm", "soilDB", "aqp", "rhdf5", "tidyverse"))
-theme_set(theme_clean(base_size = 13)) #Set ggplot2 theme
+theme_set(theme_clean(base_size = 15)) #Set ggplot2 theme
 
 # Carbon density ----------------------------------------------------------
 #First, extract data for each biome using Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
