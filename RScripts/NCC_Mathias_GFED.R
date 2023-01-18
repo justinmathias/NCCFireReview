@@ -28,6 +28,7 @@ gfed2014ras <- brick("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Natur
 gfed2015ras <- brick("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/GFED/fire_emissions_v4_R1_1293/data/GFED4.1s_2015.hdf5")
 gfed2016ras <- brick("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/GFED/fire_emissions_v4_R1_1293/data/GFED4.1s_2016.hdf5")
 
+job({
 #Set extent of each raster
 extent(gfed1997ras) <- extent(-179.875, 179.875, -89.875, 89.875)
 extent(gfed1998ras) <- extent(-179.875, 179.875, -89.875, 89.875)
@@ -144,15 +145,15 @@ emissions2001_10_gC_grid_cell <- gfed2001ras$C.10*gfed2001ras$grid_cell_area
 emissions2001_11_gC_grid_cell <- gfed2001ras$C.11*gfed2001ras$grid_cell_area
 emissions2001_12_gC_grid_cell <- gfed2001ras$C.12*gfed2001ras$grid_cell_area
 
-emissions2002_1_gC_grid_cell <- gfed2002ras$C.1*gfed2002ras$grid_cell_area*
-emissions2002_2_gC_grid_cell <- gfed2002ras$C.2*gfed2002ras$grid_cell_area*
-emissions2002_3_gC_grid_cell <- gfed2002ras$C.3*gfed2002ras$grid_cell_area*
-emissions2002_4_gC_grid_cell <- gfed2002ras$C.4*gfed2002ras$grid_cell_area*
-emissions2002_5_gC_grid_cell <- gfed2002ras$C.5*gfed2002ras$grid_cell_area*
-emissions2002_6_gC_grid_cell <- gfed2002ras$C.6*gfed2002ras$grid_cell_area*
-emissions2002_7_gC_grid_cell <- gfed2002ras$C.7*gfed2002ras$grid_cell_area*
-emissions2002_8_gC_grid_cell <- gfed2002ras$C.8*gfed2002ras$grid_cell_area*
-emissions2002_9_gC_grid_cell <- gfed2002ras$C.9*gfed2002ras$grid_cell_area*
+emissions2002_1_gC_grid_cell <- gfed2002ras$C.1*gfed2002ras$grid_cell_area
+emissions2002_2_gC_grid_cell <- gfed2002ras$C.2*gfed2002ras$grid_cell_area
+emissions2002_3_gC_grid_cell <- gfed2002ras$C.3*gfed2002ras$grid_cell_area
+emissions2002_4_gC_grid_cell <- gfed2002ras$C.4*gfed2002ras$grid_cell_area
+emissions2002_5_gC_grid_cell <- gfed2002ras$C.5*gfed2002ras$grid_cell_area
+emissions2002_6_gC_grid_cell <- gfed2002ras$C.6*gfed2002ras$grid_cell_area
+emissions2002_7_gC_grid_cell <- gfed2002ras$C.7*gfed2002ras$grid_cell_area
+emissions2002_8_gC_grid_cell <- gfed2002ras$C.8*gfed2002ras$grid_cell_area
+emissions2002_9_gC_grid_cell <- gfed2002ras$C.9*gfed2002ras$grid_cell_area
 emissions2002_10_gC_grid_cell <- gfed2002ras$C.10*gfed2002ras$grid_cell_area
 emissions2002_11_gC_grid_cell <- gfed2002ras$C.11*gfed2002ras$grid_cell_area
 emissions2002_12_gC_grid_cell <- gfed2002ras$C.12*gfed2002ras$grid_cell_area
@@ -3386,17 +3387,17 @@ AGRIemissions <- calc(AGRIemissions1997_2016, fun = mean, na.rm = T)
 DEFOemissions <- calc(DEFOemissions1997_2016, fun = mean, na.rm = T)
 
 #Caclulate the mean total annual C emissions for the period 2012-2016
-PEATsum <- conv_unit(cellStats(PEATemissions, sum), from = "g", to = "Tg")  #Get sum and convert to TgC
+PEATsum <- conv_unit(cellStats(PEATemissions, sum), from = "g", to = "Pg")  #Get sum and convert to PgC
 PEATsum
-BORFsum <- conv_unit(cellStats(BORFemissions, sum), from = "g", to = "Tg")  #Get sum and convert to TgC
+BORFsum <- conv_unit(cellStats(BORFemissions, sum), from = "g", to = "Pg")  #Get sum and convert to PgC
 BORFsum
-TEMFsum <- conv_unit(cellStats(TEMFemissions, sum), from = "g", to = "Tg")  #Get sum and convert to TgC
+TEMFsum <- conv_unit(cellStats(TEMFemissions, sum), from = "g", to = "Pg")  #Get sum and convert to PgC
 TEMFsum
-SAVAsum <- conv_unit(cellStats(SAVAemissions, sum), from = "g", to = "Tg")  #Get sum and convert to TgC
+SAVAsum <- conv_unit(cellStats(SAVAemissions, sum), from = "g", to = "Pg")  #Get sum and convert to PgC
 SAVAsum
-AGRIsum <- conv_unit(cellStats(AGRIemissions, sum), from = "g", to = "Tg")  #Get sum and convert to TgC
+AGRIsum <- conv_unit(cellStats(AGRIemissions, sum), from = "g", to = "Pg")  #Get sum and convert to PgC
 AGRIsum
-DEFOsum <- conv_unit(cellStats(DEFOemissions, sum), from = "g", to = "Tg")  #Get sum and convert to TgC
+DEFOsum <- conv_unit(cellStats(DEFOemissions, sum), from = "g", to = "Pg")  #Get sum and convert to TPgC
 DEFOsum
 
 TOTALemissions <- (PEATsum+BORFsum+TEMFsum+SAVAsum+AGRIsum+DEFOsum)
@@ -3415,7 +3416,7 @@ GFEDemissions <- data.frame("Biome" = c("BORF",
                                         "PEAT",
                                         "DEFO",
                                         "AGRI"),
-                            "Emissions_TgC" = c(BORFsum,
+                            "Emissions_PgC" = c(BORFsum,
                                                 TEMFsum,
                                                 SAVAsum,
                                                 PEATsum,
@@ -3427,12 +3428,12 @@ GFEDemissions <- data.frame("Biome" = c("BORF",
                                                     PEATpercent,
                                                     DEFOpercent,
                                                     AGRIpercent))
-
+})
 
 #Create quick df to autoplace percents over columns
 placement <- GFEDemissions %>% #We want to create a dataframe to assign the position of the C emissions
   group_by(Biome) %>%
-  mutate(PlacementValue = Emissions_TgC + 15)
+  mutate(PlacementValue = Emissions_PgC + 0.1)
 
 GFEDemissions <- left_join(GFEDemissions, placement) %>% mutate(Emissions_percent = round(Emissions_percent, 0))
 
@@ -3440,131 +3441,131 @@ GFEDemissions <- left_join(GFEDemissions, placement) %>% mutate(Emissions_percen
 
 #Calculate change in mean emissions over time
 #PEAT
-sumPEATemissions1997 <- conv_unit(cellStats(PEATemissions1997_2016[[1]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions1998 <- conv_unit(cellStats(PEATemissions1997_2016[[2]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions1999 <- conv_unit(cellStats(PEATemissions1997_2016[[3]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions2000 <- conv_unit(cellStats(PEATemissions1997_2016[[4]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions2001 <- conv_unit(cellStats(PEATemissions1997_2016[[5]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions2002 <- conv_unit(cellStats(PEATemissions1997_2016[[6]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions2003 <- conv_unit(cellStats(PEATemissions1997_2016[[7]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions2004 <- conv_unit(cellStats(PEATemissions1997_2016[[8]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions2005 <- conv_unit(cellStats(PEATemissions1997_2016[[9]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions2006 <- conv_unit(cellStats(PEATemissions1997_2016[[10]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions2007 <- conv_unit(cellStats(PEATemissions1997_2016[[11]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions2008 <- conv_unit(cellStats(PEATemissions1997_2016[[12]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions2009 <- conv_unit(cellStats(PEATemissions1997_2016[[13]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions2010 <- conv_unit(cellStats(PEATemissions1997_2016[[14]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions2011 <- conv_unit(cellStats(PEATemissions1997_2016[[15]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions2012 <- conv_unit(cellStats(PEATemissions1997_2016[[16]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions2013 <- conv_unit(cellStats(PEATemissions1997_2016[[17]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions2014 <- conv_unit(cellStats(PEATemissions1997_2016[[18]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions2015 <- conv_unit(cellStats(PEATemissions1997_2016[[19]], stat = sum), from = "g", to = "Tg")
-sumPEATemissions2016 <- conv_unit(cellStats(PEATemissions1997_2016[[20]], stat = sum), from = "g", to = "Tg")
-#DEFO, from = "g", to = "Tg")
-sumDEFOemissions1997 <- conv_unit(cellStats(DEFOemissions1997_2016[[1]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions1998 <- conv_unit(cellStats(DEFOemissions1997_2016[[2]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions1999 <- conv_unit(cellStats(DEFOemissions1997_2016[[3]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions2000 <- conv_unit(cellStats(DEFOemissions1997_2016[[4]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions2001 <- conv_unit(cellStats(DEFOemissions1997_2016[[5]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions2002 <- conv_unit(cellStats(DEFOemissions1997_2016[[6]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions2003 <- conv_unit(cellStats(DEFOemissions1997_2016[[7]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions2004 <- conv_unit(cellStats(DEFOemissions1997_2016[[8]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions2005 <- conv_unit(cellStats(DEFOemissions1997_2016[[9]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions2006 <- conv_unit(cellStats(DEFOemissions1997_2016[[10]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions2007 <- conv_unit(cellStats(DEFOemissions1997_2016[[11]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions2008 <- conv_unit(cellStats(DEFOemissions1997_2016[[12]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions2009 <- conv_unit(cellStats(DEFOemissions1997_2016[[13]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions2010 <- conv_unit(cellStats(DEFOemissions1997_2016[[14]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions2011 <- conv_unit(cellStats(DEFOemissions1997_2016[[15]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions2012 <- conv_unit(cellStats(DEFOemissions1997_2016[[16]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions2013 <- conv_unit(cellStats(DEFOemissions1997_2016[[17]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions2014 <- conv_unit(cellStats(DEFOemissions1997_2016[[18]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions2015 <- conv_unit(cellStats(DEFOemissions1997_2016[[19]], stat = sum), from = "g", to = "Tg")
-sumDEFOemissions2016 <- conv_unit(cellStats(DEFOemissions1997_2016[[20]], stat = sum), from = "g", to = "Tg")
+sumPEATemissions1997 <- conv_unit(cellStats(PEATemissions1997_2016[[1]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions1998 <- conv_unit(cellStats(PEATemissions1997_2016[[2]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions1999 <- conv_unit(cellStats(PEATemissions1997_2016[[3]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions2000 <- conv_unit(cellStats(PEATemissions1997_2016[[4]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions2001 <- conv_unit(cellStats(PEATemissions1997_2016[[5]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions2002 <- conv_unit(cellStats(PEATemissions1997_2016[[6]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions2003 <- conv_unit(cellStats(PEATemissions1997_2016[[7]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions2004 <- conv_unit(cellStats(PEATemissions1997_2016[[8]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions2005 <- conv_unit(cellStats(PEATemissions1997_2016[[9]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions2006 <- conv_unit(cellStats(PEATemissions1997_2016[[10]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions2007 <- conv_unit(cellStats(PEATemissions1997_2016[[11]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions2008 <- conv_unit(cellStats(PEATemissions1997_2016[[12]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions2009 <- conv_unit(cellStats(PEATemissions1997_2016[[13]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions2010 <- conv_unit(cellStats(PEATemissions1997_2016[[14]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions2011 <- conv_unit(cellStats(PEATemissions1997_2016[[15]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions2012 <- conv_unit(cellStats(PEATemissions1997_2016[[16]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions2013 <- conv_unit(cellStats(PEATemissions1997_2016[[17]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions2014 <- conv_unit(cellStats(PEATemissions1997_2016[[18]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions2015 <- conv_unit(cellStats(PEATemissions1997_2016[[19]], stat = sum), from = "g", to = "Pg")
+sumPEATemissions2016 <- conv_unit(cellStats(PEATemissions1997_2016[[20]], stat = sum), from = "g", to = "Pg")
+#DEFO, from = "g", to = "Pg")
+sumDEFOemissions1997 <- conv_unit(cellStats(DEFOemissions1997_2016[[1]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions1998 <- conv_unit(cellStats(DEFOemissions1997_2016[[2]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions1999 <- conv_unit(cellStats(DEFOemissions1997_2016[[3]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions2000 <- conv_unit(cellStats(DEFOemissions1997_2016[[4]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions2001 <- conv_unit(cellStats(DEFOemissions1997_2016[[5]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions2002 <- conv_unit(cellStats(DEFOemissions1997_2016[[6]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions2003 <- conv_unit(cellStats(DEFOemissions1997_2016[[7]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions2004 <- conv_unit(cellStats(DEFOemissions1997_2016[[8]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions2005 <- conv_unit(cellStats(DEFOemissions1997_2016[[9]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions2006 <- conv_unit(cellStats(DEFOemissions1997_2016[[10]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions2007 <- conv_unit(cellStats(DEFOemissions1997_2016[[11]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions2008 <- conv_unit(cellStats(DEFOemissions1997_2016[[12]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions2009 <- conv_unit(cellStats(DEFOemissions1997_2016[[13]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions2010 <- conv_unit(cellStats(DEFOemissions1997_2016[[14]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions2011 <- conv_unit(cellStats(DEFOemissions1997_2016[[15]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions2012 <- conv_unit(cellStats(DEFOemissions1997_2016[[16]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions2013 <- conv_unit(cellStats(DEFOemissions1997_2016[[17]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions2014 <- conv_unit(cellStats(DEFOemissions1997_2016[[18]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions2015 <- conv_unit(cellStats(DEFOemissions1997_2016[[19]], stat = sum), from = "g", to = "Pg")
+sumDEFOemissions2016 <- conv_unit(cellStats(DEFOemissions1997_2016[[20]], stat = sum), from = "g", to = "Pg")
 #AGRI
-sumAGRIemissions1997 <- conv_unit(cellStats(AGRIemissions1997_2016[[1]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions1998 <- conv_unit(cellStats(AGRIemissions1997_2016[[2]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions1999 <- conv_unit(cellStats(AGRIemissions1997_2016[[3]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions2000 <- conv_unit(cellStats(AGRIemissions1997_2016[[4]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions2001 <- conv_unit(cellStats(AGRIemissions1997_2016[[5]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions2002 <- conv_unit(cellStats(AGRIemissions1997_2016[[6]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions2003 <- conv_unit(cellStats(AGRIemissions1997_2016[[7]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions2004 <- conv_unit(cellStats(AGRIemissions1997_2016[[8]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions2005 <- conv_unit(cellStats(AGRIemissions1997_2016[[9]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions2006 <- conv_unit(cellStats(AGRIemissions1997_2016[[10]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions2007 <- conv_unit(cellStats(AGRIemissions1997_2016[[11]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions2008 <- conv_unit(cellStats(AGRIemissions1997_2016[[12]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions2009 <- conv_unit(cellStats(AGRIemissions1997_2016[[13]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions2010 <- conv_unit(cellStats(AGRIemissions1997_2016[[14]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions2011 <- conv_unit(cellStats(AGRIemissions1997_2016[[15]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions2012 <- conv_unit(cellStats(AGRIemissions1997_2016[[16]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions2013 <- conv_unit(cellStats(AGRIemissions1997_2016[[17]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions2014 <- conv_unit(cellStats(AGRIemissions1997_2016[[18]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions2015 <- conv_unit(cellStats(AGRIemissions1997_2016[[19]], stat = sum), from = "g", to = "Tg")
-sumAGRIemissions2016 <- conv_unit(cellStats(AGRIemissions1997_2016[[20]], stat = sum), from = "g", to = "Tg")
+sumAGRIemissions1997 <- conv_unit(cellStats(AGRIemissions1997_2016[[1]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions1998 <- conv_unit(cellStats(AGRIemissions1997_2016[[2]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions1999 <- conv_unit(cellStats(AGRIemissions1997_2016[[3]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions2000 <- conv_unit(cellStats(AGRIemissions1997_2016[[4]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions2001 <- conv_unit(cellStats(AGRIemissions1997_2016[[5]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions2002 <- conv_unit(cellStats(AGRIemissions1997_2016[[6]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions2003 <- conv_unit(cellStats(AGRIemissions1997_2016[[7]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions2004 <- conv_unit(cellStats(AGRIemissions1997_2016[[8]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions2005 <- conv_unit(cellStats(AGRIemissions1997_2016[[9]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions2006 <- conv_unit(cellStats(AGRIemissions1997_2016[[10]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions2007 <- conv_unit(cellStats(AGRIemissions1997_2016[[11]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions2008 <- conv_unit(cellStats(AGRIemissions1997_2016[[12]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions2009 <- conv_unit(cellStats(AGRIemissions1997_2016[[13]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions2010 <- conv_unit(cellStats(AGRIemissions1997_2016[[14]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions2011 <- conv_unit(cellStats(AGRIemissions1997_2016[[15]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions2012 <- conv_unit(cellStats(AGRIemissions1997_2016[[16]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions2013 <- conv_unit(cellStats(AGRIemissions1997_2016[[17]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions2014 <- conv_unit(cellStats(AGRIemissions1997_2016[[18]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions2015 <- conv_unit(cellStats(AGRIemissions1997_2016[[19]], stat = sum), from = "g", to = "Pg")
+sumAGRIemissions2016 <- conv_unit(cellStats(AGRIemissions1997_2016[[20]], stat = sum), from = "g", to = "Pg")
 #BORF
-sumBORFemissions1997 <- conv_unit(cellStats(BORFemissions1997_2016[[1]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions1998 <- conv_unit(cellStats(BORFemissions1997_2016[[2]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions1999 <- conv_unit(cellStats(BORFemissions1997_2016[[3]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions2000 <- conv_unit(cellStats(BORFemissions1997_2016[[4]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions2001 <- conv_unit(cellStats(BORFemissions1997_2016[[5]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions2002 <- conv_unit(cellStats(BORFemissions1997_2016[[6]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions2003 <- conv_unit(cellStats(BORFemissions1997_2016[[7]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions2004 <- conv_unit(cellStats(BORFemissions1997_2016[[8]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions2005 <- conv_unit(cellStats(BORFemissions1997_2016[[9]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions2006 <- conv_unit(cellStats(BORFemissions1997_2016[[10]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions2007 <- conv_unit(cellStats(BORFemissions1997_2016[[11]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions2008 <- conv_unit(cellStats(BORFemissions1997_2016[[12]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions2009 <- conv_unit(cellStats(BORFemissions1997_2016[[13]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions2010 <- conv_unit(cellStats(BORFemissions1997_2016[[14]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions2011 <- conv_unit(cellStats(BORFemissions1997_2016[[15]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions2012 <- conv_unit(cellStats(BORFemissions1997_2016[[16]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions2013 <- conv_unit(cellStats(BORFemissions1997_2016[[17]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions2014 <- conv_unit(cellStats(BORFemissions1997_2016[[18]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions2015 <- conv_unit(cellStats(BORFemissions1997_2016[[19]], stat = sum), from = "g", to = "Tg")
-sumBORFemissions2016 <- conv_unit(cellStats(BORFemissions1997_2016[[20]], stat = sum), from = "g", to = "Tg")
+sumBORFemissions1997 <- conv_unit(cellStats(BORFemissions1997_2016[[1]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions1998 <- conv_unit(cellStats(BORFemissions1997_2016[[2]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions1999 <- conv_unit(cellStats(BORFemissions1997_2016[[3]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions2000 <- conv_unit(cellStats(BORFemissions1997_2016[[4]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions2001 <- conv_unit(cellStats(BORFemissions1997_2016[[5]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions2002 <- conv_unit(cellStats(BORFemissions1997_2016[[6]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions2003 <- conv_unit(cellStats(BORFemissions1997_2016[[7]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions2004 <- conv_unit(cellStats(BORFemissions1997_2016[[8]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions2005 <- conv_unit(cellStats(BORFemissions1997_2016[[9]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions2006 <- conv_unit(cellStats(BORFemissions1997_2016[[10]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions2007 <- conv_unit(cellStats(BORFemissions1997_2016[[11]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions2008 <- conv_unit(cellStats(BORFemissions1997_2016[[12]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions2009 <- conv_unit(cellStats(BORFemissions1997_2016[[13]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions2010 <- conv_unit(cellStats(BORFemissions1997_2016[[14]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions2011 <- conv_unit(cellStats(BORFemissions1997_2016[[15]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions2012 <- conv_unit(cellStats(BORFemissions1997_2016[[16]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions2013 <- conv_unit(cellStats(BORFemissions1997_2016[[17]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions2014 <- conv_unit(cellStats(BORFemissions1997_2016[[18]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions2015 <- conv_unit(cellStats(BORFemissions1997_2016[[19]], stat = sum), from = "g", to = "Pg")
+sumBORFemissions2016 <- conv_unit(cellStats(BORFemissions1997_2016[[20]], stat = sum), from = "g", to = "Pg")
 #TEMF
-sumTEMFemissions1997 <- conv_unit(cellStats(TEMFemissions1997_2016[[1]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions1998 <- conv_unit(cellStats(TEMFemissions1997_2016[[2]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions1999 <- conv_unit(cellStats(TEMFemissions1997_2016[[3]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions2000 <- conv_unit(cellStats(TEMFemissions1997_2016[[4]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions2001 <- conv_unit(cellStats(TEMFemissions1997_2016[[5]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions2002 <- conv_unit(cellStats(TEMFemissions1997_2016[[6]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions2003 <- conv_unit(cellStats(TEMFemissions1997_2016[[7]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions2004 <- conv_unit(cellStats(TEMFemissions1997_2016[[8]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions2005 <- conv_unit(cellStats(TEMFemissions1997_2016[[9]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions2006 <- conv_unit(cellStats(TEMFemissions1997_2016[[10]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions2007 <- conv_unit(cellStats(TEMFemissions1997_2016[[11]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions2008 <- conv_unit(cellStats(TEMFemissions1997_2016[[12]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions2009 <- conv_unit(cellStats(TEMFemissions1997_2016[[13]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions2010 <- conv_unit(cellStats(TEMFemissions1997_2016[[14]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions2011 <- conv_unit(cellStats(TEMFemissions1997_2016[[15]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions2012 <- conv_unit(cellStats(TEMFemissions1997_2016[[16]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions2013 <- conv_unit(cellStats(TEMFemissions1997_2016[[17]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions2014 <- conv_unit(cellStats(TEMFemissions1997_2016[[18]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions2015 <- conv_unit(cellStats(TEMFemissions1997_2016[[19]], stat = sum), from = "g", to = "Tg")
-sumTEMFemissions2016 <- conv_unit(cellStats(TEMFemissions1997_2016[[20]], stat = sum), from = "g", to = "Tg")
+sumTEMFemissions1997 <- conv_unit(cellStats(TEMFemissions1997_2016[[1]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions1998 <- conv_unit(cellStats(TEMFemissions1997_2016[[2]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions1999 <- conv_unit(cellStats(TEMFemissions1997_2016[[3]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions2000 <- conv_unit(cellStats(TEMFemissions1997_2016[[4]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions2001 <- conv_unit(cellStats(TEMFemissions1997_2016[[5]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions2002 <- conv_unit(cellStats(TEMFemissions1997_2016[[6]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions2003 <- conv_unit(cellStats(TEMFemissions1997_2016[[7]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions2004 <- conv_unit(cellStats(TEMFemissions1997_2016[[8]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions2005 <- conv_unit(cellStats(TEMFemissions1997_2016[[9]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions2006 <- conv_unit(cellStats(TEMFemissions1997_2016[[10]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions2007 <- conv_unit(cellStats(TEMFemissions1997_2016[[11]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions2008 <- conv_unit(cellStats(TEMFemissions1997_2016[[12]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions2009 <- conv_unit(cellStats(TEMFemissions1997_2016[[13]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions2010 <- conv_unit(cellStats(TEMFemissions1997_2016[[14]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions2011 <- conv_unit(cellStats(TEMFemissions1997_2016[[15]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions2012 <- conv_unit(cellStats(TEMFemissions1997_2016[[16]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions2013 <- conv_unit(cellStats(TEMFemissions1997_2016[[17]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions2014 <- conv_unit(cellStats(TEMFemissions1997_2016[[18]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions2015 <- conv_unit(cellStats(TEMFemissions1997_2016[[19]], stat = sum), from = "g", to = "Pg")
+sumTEMFemissions2016 <- conv_unit(cellStats(TEMFemissions1997_2016[[20]], stat = sum), from = "g", to = "Pg")
 #SAVA
-sumSAVAemissions1997 <- conv_unit(cellStats(SAVAemissions1997_2016[[1]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions1998 <- conv_unit(cellStats(SAVAemissions1997_2016[[2]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions1999 <- conv_unit(cellStats(SAVAemissions1997_2016[[3]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions2000 <- conv_unit(cellStats(SAVAemissions1997_2016[[4]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions2001 <- conv_unit(cellStats(SAVAemissions1997_2016[[5]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions2002 <- conv_unit(cellStats(SAVAemissions1997_2016[[6]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions2003 <- conv_unit(cellStats(SAVAemissions1997_2016[[7]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions2004 <- conv_unit(cellStats(SAVAemissions1997_2016[[8]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions2005 <- conv_unit(cellStats(SAVAemissions1997_2016[[9]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions2006 <- conv_unit(cellStats(SAVAemissions1997_2016[[10]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions2007 <- conv_unit(cellStats(SAVAemissions1997_2016[[11]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions2008 <- conv_unit(cellStats(SAVAemissions1997_2016[[12]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions2009 <- conv_unit(cellStats(SAVAemissions1997_2016[[13]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions2010 <- conv_unit(cellStats(SAVAemissions1997_2016[[14]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions2011 <- conv_unit(cellStats(SAVAemissions1997_2016[[15]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions2012 <- conv_unit(cellStats(SAVAemissions1997_2016[[16]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions2013 <- conv_unit(cellStats(SAVAemissions1997_2016[[17]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions2014 <- conv_unit(cellStats(SAVAemissions1997_2016[[18]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions2015 <- conv_unit(cellStats(SAVAemissions1997_2016[[19]], stat = sum), from = "g", to = "Tg")
-sumSAVAemissions2016 <- conv_unit(cellStats(SAVAemissions1997_2016[[20]], stat = sum), from = "g", to = "Tg")
+sumSAVAemissions1997 <- conv_unit(cellStats(SAVAemissions1997_2016[[1]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions1998 <- conv_unit(cellStats(SAVAemissions1997_2016[[2]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions1999 <- conv_unit(cellStats(SAVAemissions1997_2016[[3]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions2000 <- conv_unit(cellStats(SAVAemissions1997_2016[[4]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions2001 <- conv_unit(cellStats(SAVAemissions1997_2016[[5]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions2002 <- conv_unit(cellStats(SAVAemissions1997_2016[[6]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions2003 <- conv_unit(cellStats(SAVAemissions1997_2016[[7]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions2004 <- conv_unit(cellStats(SAVAemissions1997_2016[[8]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions2005 <- conv_unit(cellStats(SAVAemissions1997_2016[[9]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions2006 <- conv_unit(cellStats(SAVAemissions1997_2016[[10]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions2007 <- conv_unit(cellStats(SAVAemissions1997_2016[[11]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions2008 <- conv_unit(cellStats(SAVAemissions1997_2016[[12]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions2009 <- conv_unit(cellStats(SAVAemissions1997_2016[[13]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions2010 <- conv_unit(cellStats(SAVAemissions1997_2016[[14]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions2011 <- conv_unit(cellStats(SAVAemissions1997_2016[[15]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions2012 <- conv_unit(cellStats(SAVAemissions1997_2016[[16]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions2013 <- conv_unit(cellStats(SAVAemissions1997_2016[[17]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions2014 <- conv_unit(cellStats(SAVAemissions1997_2016[[18]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions2015 <- conv_unit(cellStats(SAVAemissions1997_2016[[19]], stat = sum), from = "g", to = "Pg")
+sumSAVAemissions2016 <- conv_unit(cellStats(SAVAemissions1997_2016[[20]], stat = sum), from = "g", to = "Pg")
 
 GFEDemissionsTime <- data.frame("Year" = rep(1998:2016, 6),
                                 "Biome" = c(rep("SAVA", 19),
@@ -3573,7 +3574,7 @@ GFEDemissionsTime <- data.frame("Year" = rep(1998:2016, 6),
                                             rep("TEMF", 19),
                                             rep("DEFO", 19),
                                             rep("AGRI", 19)),
-                                "Emissions_TgC" = c(sumSAVAemissions1998,
+                                "Emissions_PgC" = c(sumSAVAemissions1998,
                                                     sumSAVAemissions1999,
                                                     sumSAVAemissions2000,
                                                     sumSAVAemissions2001,
@@ -3692,8 +3693,8 @@ GFEDemissionsTime <- data.frame("Year" = rep(1998:2016, 6),
 
 GFEDerr <- GFEDemissionsTime %>%
   group_by(Biome) %>%
-  summarise(SD = sd(Emissions_TgC),
-            SE = SD/sqrt(length(Emissions_TgC)))
+  summarise(SD = sd(Emissions_PgC),
+            SE = SD/sqrt(length(Emissions_PgC)))
 
 GFEDemissions <- left_join(GFEDemissions, GFEDerr)
 
@@ -3701,16 +3702,24 @@ GFEDemissions <- left_join(GFEDemissions, GFEDerr)
 GFEDemissions %>%   filter(Biome != "AGRI", Biome != "DEFO") %>%
 summarise(total = sum(Emissions_percent))
 
-GFEDemissions <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Data/GFEDemissions.xlsx")
-GFEDemissionsTime <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Data/GFEDemissionsTime.xlsx")
+
+GFEDemissions
+GFEDemissionsTime
+
+# setwd("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Data")
+# write.xlsx(GFEDemissionsTime, "GFEDemissionsTime.xlsx")
+#
+#
+# GFEDemissions <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Data/GFEDemissions.xlsx")
+# GFEDemissionsTime <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Data/GFEDemissionsTime.xlsx")
 
 FigEmis <- GFEDemissions %>%
   filter(Biome != "AGRI", Biome != "DEFO") %>%
-  ggplot(aes(x = reorder(Biome, -Emissions_TgC, mean), y = Emissions_TgC)) +
+  ggplot(aes(x = reorder(Biome, -Emissions_PgC, mean), y = Emissions_PgC)) +
   geom_col(aes(fill = Biome), alpha = 0.95, width = 0.75) +
-  geom_errorbar(aes(ymin = Emissions_TgC - SD, ymax = Emissions_TgC + SD), width = 0.2, size = 0.4) +
+  geom_errorbar(aes(ymin = Emissions_PgC - SD, ymax = Emissions_PgC + SD), width = 0.2, size = 0.4) +
   xlab("Biome") +
-  ylab("Emissions (Tg C)") +
+  ylab("Emissions (Pg C)") +
   theme(
     legend.position = "none",
     legend.title = element_text(size = 11, family = "Arial"),
@@ -3739,7 +3748,7 @@ FigEmis <- GFEDemissions %>%
       face = "bold")) +
   scale_fill_tableau() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray25") +
-  geom_text(aes(y = PlacementValue, label = paste0(Emissions_percent, "%")), size = 4, color = "black", fontface = "bold", hjust = -0.85) +
+  geom_text(aes(y = PlacementValue, label = paste0(Emissions_percent, "%")), size = 4, color = "black", fontface = "bold", hjust = -0.65) +
   labs(tag = "A")
 
 
@@ -3747,11 +3756,11 @@ FigEmis <- GFEDemissions %>%
 
 FigEmisInset <- GFEDemissionsTime %>%
   filter(Biome != "AGRI", Biome != "DEFO") %>%
-  ggplot(aes(x = Year, y = Emissions_TgC, color = Biome)) +
+  ggplot(aes(x = Year, y = Emissions_PgC, color = Biome)) +
   geom_point(alpha = 0.75) +
   geom_smooth(se = FALSE) +
   xlab("Year") +
-  ylab("Emissions (Tg C)") +
+  ylab("Emissions (Pg C)") +
   theme(
     legend.position = "none",
     legend.title = element_text(size = 11, family = "Arial"),
@@ -3788,21 +3797,22 @@ FigEmisInset <- GFEDemissionsTime %>%
 ff <- read.csv("/Users/justinmathias/Downloads/global.1751_2017.csv")
 FF <- ff %>% dplyr::select(Year, TotalCarbonEmissions.from.fossil.fuel.consumption.and.cement.production..million.metric.tons.of.C.) %>%
   rename("FFemissionsTgC" = "TotalCarbonEmissions.from.fossil.fuel.consumption.and.cement.production..million.metric.tons.of.C.") %>%
-  mutate(FFemissionsTgC = conv_unit(FFemissionsTgC*10^6, from = "metric_ton", "Tg")) %>%
+  mutate(FFemissionsPgC = conv_unit(FFemissionsTgC*10^6, from = "metric_ton", "Pg")) %>%
+  dplyr::select(Year, FFemissionsPgC) %>%
   filter(Year <= 2016, Year >= 1998)
 
 GFEDsummary <- GFEDemissionsTime %>% group_by(Year) %>%
-  summarise(FireEmissions_TgC = sum(Emissions_TgC))
+  summarise(FireEmissions_PgC = sum(Emissions_PgC))
 
 EmissionsAll <- left_join(GFEDsummary, FF) %>%
-  pivot_longer(names_to = "EmissionsType", values_to = "Emissions_TgC", -Year)
+  pivot_longer(names_to = "EmissionsType", values_to = "Emissions_PgC", -Year)
 
 EmissionsAllSummary <- EmissionsAll %>%
   group_by(EmissionsType) %>%
-  summarise(SD = sd(Emissions_TgC),
-            Emissions_TgC = mean(Emissions_TgC)) %>%
-  mutate(Emissions_percent = round(Emissions_TgC/sum(Emissions_TgC)*100, 0),
-         PlacementValue = Emissions_TgC/1000 + 0.35)
+  summarise(SD = sd(Emissions_PgC),
+            Emissions_PgC = mean(Emissions_PgC)) %>%
+  mutate(Emissions_percent = round(Emissions_PgC/sum(Emissions_PgC)*100, 0),
+         PlacementValue = Emissions_PgC + 0.65)
 
 
 
@@ -3811,11 +3821,11 @@ EmissionsAllSummary <- EmissionsAll %>%
 
 FigEmisB <-
   EmissionsAllSummary %>%
-  ggplot(aes(x = EmissionsType, y = Emissions_TgC/1000)) +
+  ggplot(aes(x = EmissionsType, y = Emissions_PgC)) +
   geom_col(aes(fill = EmissionsType), alpha = 0.95, width = 0.75) +
-  geom_errorbar(aes(ymin = Emissions_TgC/1000 - SD/1000, ymax = Emissions_TgC/1000 + SD/1000), width = 0.2, size = 0.4) +
+  geom_errorbar(aes(ymin = Emissions_PgC - SD, ymax = Emissions_PgC + SD), width = 0.2, size = 0.4) +
   xlab("Emissions Type") +
-  ylab(expression("Emissions (10"^{3}*" Tg C)")) +
+  ylab(expression("Emissions (Pg C)")) +
   theme(
     legend.position = "none",
     legend.title = element_text(size = 11, family = "Arial"),
@@ -3846,7 +3856,7 @@ FigEmisB <-
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray25") +
   labs(tag = "B") +
   scale_x_discrete(labels=c("Fossil \n Fuels", "Wildfire")) +
-  geom_text(aes(y = PlacementValue, label = paste0(Emissions_percent, "%")), size = 4, color = "black", fontface = "bold", vjust = 0.5, hjust = -0.6)
+  geom_text(aes(y = PlacementValue, label = paste0(Emissions_percent, "%")), size = 4, color = "black", fontface = "bold", vjust = 0.5, hjust = -0.4)
 
 
 
@@ -3857,7 +3867,7 @@ AAAAABBB
 AAAAABBB
 "
 
-p1 <- FigEmis + inset_element(FigEmisInset, 0.35, 0.2, 0.95,0.875)
+p1 <- FigEmis + inset_element(FigEmisInset, 0.35, 0.23, 0.95,0.925)
 p2 <- FigEmisB
 p1 + p2 + plot_layout(design = plot_design, widths = c(5,2))
 ggsave("GFEDemissions.tiff", dpi = 300, units = c("in"), width = 8, height = 4)
