@@ -3867,6 +3867,7 @@ AAAAABBB
 AAAAABBB
 "
 
+setwd("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Figures")
 p1 <- FigEmis + inset_element(FigEmisInset, 0.35, 0.23, 0.95,0.925)
 p2 <- FigEmisB
 p1 + p2 + plot_layout(design = plot_design, widths = c(5,2))
@@ -3903,13 +3904,6 @@ g1 + geom_bar(data=dat1 %>% filter(grepl("part", variable)),
 
 
 
-
-
-
-
-
-
-# Create basis regions raster ---------------------------------------------
 
 
 

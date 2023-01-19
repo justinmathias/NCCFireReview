@@ -4,7 +4,7 @@
 #Housekeeping: load packages, set themes, etc.
 library("easypackages")
 libraries(c("terra", "ggsci", "ggthemes", "RColorBrewer", "measurements", "stringr", "rayshader", "egg", "rgdal", "openxlsx", "shiny", "shinydashboard",
-            "plotly", "wordcloud", "tm", "soilDB", "aqp", "rhdf5", "tidyverse"))
+            "plotly", "wordcloud", "tm", "soilDB", "aqp", "rhdf5", "drc", "patchwork","nationalparkcolors", "tidyverse"))
 theme_set(theme_clean(base_size = 15)) #Set ggplot2 theme
 
 # Carbon density ----------------------------------------------------------
