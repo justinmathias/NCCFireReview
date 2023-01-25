@@ -3,12 +3,45 @@
 #Housekeeping: load packages, set themes, etc.
 library("easypackages")
 libraries(c("terra", "ggsci", "ggthemes", "RColorBrewer", "measurements", "stringr", "rayshader", "egg", "rgdal", "openxlsx", "shiny", "shinydashboard",
-            "plotly", "wordcloud", "tm", "soilDB", "aqp", "rhdf5", "drc", "tidyverse", "patchwork","nationalparkcolors"))
+            "plotly", "wordcloud", "tm", "soilDB", "aqp", "rhdf5", "drc", "patchwork","nationalparkcolors", "tidyverse"))
 
 
 ag <- read.csv("https://raw.githubusercontent.com/justinmathias/NCCFireReview/main/Data/Converted%20files/AbovegroundConvertedGFED.csv")
 bg <- read.csv("https://raw.githubusercontent.com/justinmathias/NCCFireReview/main/Data/Converted%20files/BelowgroundConvertedGFED.csv")
 tec <- read.csv("https://raw.githubusercontent.com/justinmathias/NCCFireReview/main/Data/Converted%20files/TECConverted_GFED.csv")
+
+
+# C dynamics, control versus burned ---------------------------------------
+#AG
+vars <- c(
+  "LiveWoodC_StockData_MgC_ha",
+  "FoliageC_StockData_MgC_ha",
+  "TotalLive_StockData_MgC_ha",
+  "TotalAboveground_StockData_MgC_ha",
+  "PyC_StockData_MgC_ha",
+  "CWDC_StockData_MgC_ha",
+  "FWDC_StockData_MgC_ha",
+  "TotalDead_StockData_MgC_ha",
+  "LitterC_StockData_MgC_ha",
+  "TEC_StockData_MgC_ha",
+  "FoliageC_StockData_percent",
+  "TotalAboveground_StockData_percent",
+  "LitterC_StockData_percent",
+  "ANPP_FluxData_g_m2",
+  "GPP_FluxData_g_m2",
+  "NPP_FluxData_g_m2",
+  "NEP_FluxData_g_m2",
+  "Reco_FluxData_g_m2",
+  "Photosynthesis_FluxData_g_m2"
+)
+
+ag %>%
+  ggplot(aes(x = Treatment, y = LiveWoodC_StockData_MgC_ha)) +
+  geom_point(alpha = 0.5) +
+  geom_boxplot(alpha = 0) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray20") +
+  ggtitle("LiveWoodC_StockData_MgC_ha") +
+  ylab("Delta")
 
 
 # Belowground C trajectories ----------------------------------------------
@@ -29,6 +62,7 @@ vars <- c("SoilC1_StockData_Mg_ha_scaled",
           "Ra_FluxData_g_m2",
           "CH4_FluxData_g_m2",
           "PeatAccumulationRate_FluxData_g_m2")
+var <- "PeatAccumulationRate_FluxData_g_m2"
 ##Continuous, all----
 setwd("/Users/justinmathias/Desktop/NCC TimeSinceFireFigs/TimeSeries/Belowground/TimeContinuous/All")
 for (i in 1:length(vars)) {
