@@ -235,4 +235,152 @@ AG19 <- ag %>%
   drop_na(pChange)
 
 
+var <- "SoilC1_StockData_Mg_ha_scaled"
+BG1 <- bg %>%
+  dplyr::select(RecordID, RecordSubID_old, Treatment,TimeSinceFire_years,Study_Severity,StudyType,GFEDVegCover,var) %>%
+  drop_na(var) %>%
+  pivot_wider(names_from = Treatment, values_from = var, names_prefix = "") %>%
+  unnest(cols = c(Control, Burn)) %>%
+  mutate(pChange = percentchange(Burn, Control),
+         Var = "SoilC1_StockData",
+         DataType = "MassArea") %>%
+  drop_na(pChange)
+
+var <- "SoilC1_StockData_percent"
+BG2 <- bg %>%
+  dplyr::select(RecordID, RecordSubID_old, Treatment,TimeSinceFire_years,Study_Severity,StudyType,GFEDVegCover,var) %>%
+  drop_na(var) %>%
+  pivot_wider(names_from = Treatment, values_from = var, names_prefix = "") %>%
+  unnest(cols = c(Control, Burn)) %>%
+  mutate(pChange = percentchange(Burn, Control),
+         Var = "SoilC1_StockData",
+         DataType = "Percent") %>%
+  drop_na(pChange)
+
+
+var <- "O_lyrC_StockData_Mg_ha"
+BG3 <- bg %>%
+  dplyr::select(RecordID, RecordSubID_old, Treatment,TimeSinceFire_years,Study_Severity,StudyType,GFEDVegCover,var) %>%
+  drop_na(var) %>%
+  pivot_wider(names_from = Treatment, values_from = var, names_prefix = "") %>%
+  unnest(cols = c(Control, Burn)) %>%
+  mutate(pChange = percentchange(Burn, Control),
+         Var = "O_lyrC_StockData",
+         DataType = "MassArea") %>%
+  drop_na(pChange)
+
+var <- "O_lyrC_StockData_percent"
+BG4 <- bg %>%
+  dplyr::select(RecordID, RecordSubID_old, Treatment,TimeSinceFire_years,Study_Severity,StudyType,GFEDVegCover,var) %>%
+  drop_na(var) %>%
+  pivot_wider(names_from = Treatment, values_from = var, names_prefix = "") %>%
+  unnest(cols = c(Control, Burn)) %>%
+  mutate(pChange = percentchange(Burn, Control),
+         Var = "O_lyrC_StockData",
+         DataType = "Percent") %>%
+  drop_na(pChange)
+
+var <- "LitterDuffC_StockData_Mg_ha"
+BG5 <- bg %>%
+  dplyr::select(RecordID, RecordSubID_old, Treatment,TimeSinceFire_years,Study_Severity,StudyType,GFEDVegCover,var) %>%
+  drop_na(var) %>%
+  pivot_wider(names_from = Treatment, values_from = var, names_prefix = "") %>%
+  unnest(cols = c(Control, Burn)) %>%
+  mutate(pChange = percentchange(Burn, Control),
+         Var = "LitterDuffC_StockData",
+         DataType = "MassArea") %>%
+  drop_na(pChange)
+
+var <- "LitterDuffC_StockData_percent"
+BG6 <- bg %>%
+  dplyr::select(RecordID, RecordSubID_old, Treatment,TimeSinceFire_years,Study_Severity,StudyType,GFEDVegCover,var) %>%
+  drop_na(var) %>%
+  pivot_wider(names_from = Treatment, values_from = var, names_prefix = "") %>%
+  unnest(cols = c(Control, Burn)) %>%
+  mutate(pChange = percentchange(Burn, Control),
+         Var = "LitterDuffC_StockData",
+         DataType = "Percent") %>%
+  drop_na(pChange)
+
+
+var <- "RootC_StockData_Mg_ha"
+BG7 <- bg %>%
+  dplyr::select(RecordID, RecordSubID_old, Treatment,TimeSinceFire_years,Study_Severity,StudyType,GFEDVegCover,var) %>%
+  drop_na(var) %>%
+  pivot_wider(names_from = Treatment, values_from = var, names_prefix = "") %>%
+  unnest(cols = c(Control, Burn)) %>%
+  mutate(pChange = percentchange(Burn, Control),
+         Var = "RootC_StockData",
+         DataType = "MassArea") %>%
+  drop_na(pChange)
+
+var <- "MBC_StockData_Mg_ha"
+BG8 <- bg %>%
+  dplyr::select(RecordID, RecordSubID_old, Treatment,TimeSinceFire_years,Study_Severity,StudyType,GFEDVegCover,var) %>%
+  drop_na(var) %>%
+  pivot_wider(names_from = Treatment, values_from = var, names_prefix = "") %>%
+  unnest(cols = c(Control, Burn)) %>%
+  mutate(pChange = percentchange(Burn, Control),
+         Var = "MBC_StockData",
+         DataType = "MassArea") %>%
+  drop_na(pChange)
+
+var <- "MBC_StockData_percent"
+BG9 <- bg %>%
+  dplyr::select(RecordID, RecordSubID_old, Treatment,TimeSinceFire_years,Study_Severity,StudyType,GFEDVegCover,var) %>%
+  drop_na(var) %>%
+  pivot_wider(names_from = Treatment, values_from = var, names_prefix = "") %>%
+  unnest(cols = c(Control, Burn)) %>%
+  mutate(pChange = percentchange(Burn, Control),
+         Var = "MBC_StockData",
+         DataType = "Percent") %>%
+  drop_na(pChange)
+
+var <- "Rs_FluxData_g_m2"
+BG10 <- bg %>%
+  dplyr::select(RecordID, RecordSubID_old, Treatment,TimeSinceFire_years,Study_Severity,StudyType,GFEDVegCover,var) %>%
+  drop_na(var) %>%
+  pivot_wider(names_from = Treatment, values_from = var, names_prefix = "") %>%
+  unnest(cols = c(Control, Burn)) %>%
+  mutate(pChange = percentchange(Burn, Control),
+         Var = "Rs_FluxData",
+         DataType = "MassArea") %>%
+  drop_na(pChange)
+
+var <- "Ra_FluxData_g_m2"
+BG11 <- bg %>%
+  dplyr::select(RecordID, RecordSubID_old, Treatment,TimeSinceFire_years,Study_Severity,StudyType,GFEDVegCover,var) %>%
+  drop_na(var) %>%
+  pivot_wider(names_from = Treatment, values_from = var, names_prefix = "") %>%
+  unnest(cols = c(Control, Burn)) %>%
+  mutate(pChange = percentchange(Burn, Control),
+         Var = "Ra_FluxData",
+         DataType = "MassArea") %>%
+  drop_na(pChange)
+
+var <- "CH4_FluxData_g_m2"
+BG12 <- bg %>%
+  dplyr::select(RecordID, RecordSubID_old, Treatment,TimeSinceFire_years,Study_Severity,StudyType,GFEDVegCover,var) %>%
+  drop_na(var) %>%
+  pivot_wider(names_from = Treatment, values_from = var, names_prefix = "") %>%
+  unnest(cols = c(Control, Burn)) %>%
+  mutate(pChange = percentchange(Burn, Control),
+         Var = "CH4_FluxData",
+         DataType = "MassArea") %>%
+  drop_na(pChange)
+
+
+var <- "PeatAccumulationRate_FluxData_g_m2"
+BG13 <- bg %>%
+  dplyr::select(RecordID, RecordSubID_old, Treatment,TimeSinceFire_years,Study_Severity,StudyType,GFEDVegCover,var) %>%
+  drop_na(var) %>%
+  pivot_wider(names_from = Treatment, values_from = var, names_prefix = "") %>%
+  unnest(cols = c(Control, Burn)) %>%
+  mutate(pChange = percentchange(Burn, Control),
+         Var = "PeatAccumulationRate_FluxData",
+         DataType = "MassArea") %>%
+  drop_na(pChange)
+
+
+
 
