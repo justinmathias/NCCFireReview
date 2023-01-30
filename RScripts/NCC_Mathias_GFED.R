@@ -3,7 +3,7 @@
 #Housekeeping: load packages, set themes, etc.
 library("easypackages")
 libraries(c("terra", "ggsci", "ggthemes", "RColorBrewer", "measurements", "stringr", "rayshader", "egg", "rgdal", "openxlsx", "shiny", "shinydashboard",
-            "plotly", "wordcloud", "tm", "soilDB", "aqp", "rhdf5", "tidyverse", "rhdf5", "ncdf4", "raster", "patchwork"))
+            "plotly", "wordcloud", "tm", "soilDB", "aqp", "rhdf5", "tidyverse", "rhdf5", "ncdf4", "raster", "patchwork", "job"))
 
 
 #If you're reading this i know i should have used loops or apply, but i'm lazy

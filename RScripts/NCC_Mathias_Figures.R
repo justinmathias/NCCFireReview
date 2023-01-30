@@ -8,24 +8,24 @@ libraries(c("terra", "ggsci", "ggthemes", "RColorBrewer", "measurements", "strin
 theme_set(theme_article(base_size = 13)) #Set ggplot2 theme
 
 #Load in data----
-ag <- read.csv("https://raw.githubusercontent.com/justinmathias/NCCFireReview/main/Data/Converted%20files/AbovegroundConverted.csv")
-bg <- read.csv("https://raw.githubusercontent.com/justinmathias/NCCFireReview/main/Data/Converted%20files/BelowgroundConverted.csv")
-tec <- read.csv("https://raw.githubusercontent.com/justinmathias/NCCFireReview/main/Data/Converted%20files/TECConverted.csv")
+ag <- read.csv("https://raw.githubusercontent.com/justinmathias/NCCFireReview/main/Data/Converted%20files/AbovegroundConvertedGFED.csv")
+bg <- read.csv("https://raw.githubusercontent.com/justinmathias/NCCFireReview/main/Data/Converted%20files/BelowgroundConvertedGFED.csv")
+tec <- read.csv("https://raw.githubusercontent.com/justinmathias/NCCFireReview/main/Data/Converted%20files/TECConverted_GFED.csv")
 
 #Extract only columns of interest here for each datasheet
-ag.locations <- ag %>% dplyr::select(Lat, Lon, Biome_simple) %>% drop_na(Lat,Lon) %>% #Select Lat/Lon and drop na values
+ag.locations <- ag %>% dplyr::select(Lat, Lon, GFEDVegCover) %>% drop_na(Lat,Lon) %>% #Select Lat/Lon and drop na values
   group_by(Lat,Lon) %>% filter(row_number() == 1) %>% #Keep only one record per unique location
   mutate(Datasheet = "Aboveground")
-bg.locations <- bg %>% dplyr::select(Lat, Lon, Biome_simple) %>% drop_na(Lat,Lon) %>% #Select Lat/Lon and drop na values
+bg.locations <- bg %>% dplyr::select(Lat, Lon, GFEDVegCover) %>% drop_na(Lat,Lon) %>% #Select Lat/Lon and drop na values
   group_by(Lat,Lon) %>% filter(row_number() == 1) %>% #Keep only one record per unique location
   mutate(Datasheet = "Belowground")
-tec.locations <- tec %>% dplyr::select(Lat, Lon, Biome_simple) %>% drop_na(Lat,Lon) %>% #Select Lat/Lon and drop na values
+tec.locations <- tec %>% dplyr::select(Lat, Lon, GFEDVegCover) %>% drop_na(Lat,Lon) %>% #Select Lat/Lon and drop na values
   group_by(Lat,Lon) %>% filter(row_number() == 1) %>% #Keep only one record per unique location
   mutate(Datasheet = "TEC")
 
 #Combine dataframes
 map <- rbind(ag.locations, bg.locations, tec.locations)
-map_reduced <- map %>% group_by(Lat,Lon) %>% filter(row_number() == 1)
+map_reduced <- map %>% group_by(Lat,Lon,Datasheet) %>% filter(row_number() == 1)
 
 #Create map----
 map %>%
