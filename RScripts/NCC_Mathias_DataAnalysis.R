@@ -470,6 +470,7 @@ TEC1 <- tec %>%
 
 var <- "DeadC_StockData_MgC_ha"
 TEC2 <- tec %>%
+  filter(RecordID != 22) %>%
   dplyr::select(RecordID, RecordSubID_old, Treatment,TimeSinceFire_years,Study_Severity,StudyType,GFEDVegCover,var) %>%
   drop_na(var) %>%
   pivot_wider(names_from = Treatment, values_from = var, names_prefix = "") %>%
@@ -842,21 +843,21 @@ Fig2A <- FinalAboveground %>%
             pChange_mean = mean(pChange),
             pChange_median = median(pChange)) %>%
   ggplot(aes(x = VarClean, y = pChange_mean, shape = Measurement)) +
-  geom_point(size = 3, alpha = .75) +
+  geom_point(size = 4, alpha = .75) +
   geom_errorbar(aes(ymin = pChange_mean - se, ymax = pChange_mean + se), width = 0.2, size = 0.4) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray26") +
   coord_flip() +
   theme_article() +
   theme(axis.title  = element_text(size = 15, color = "black"),
-        axis.text = element_text(size = 12, color = "black"),
+        axis.text = element_text(size = 14, color = "black"),
         strip.text = element_text(size = 15, color = "black"),
         panel.grid.major.y = element_line(color = "gray70", linetype = "dotted"),
         panel.border = element_rect(color = "black"),
-        plot.tag = element_text(face = "bold"),
+        plot.tag = element_text(face = "bold", size = 15),
         legend.position = "none") +
   xlab("") +
   ylab("% Change due to burning") +
-  geom_text(aes(y = 240, label = paste0("(",n,")")), size = 4, color = "black") +
+  geom_text(aes(y = 240, label = paste0("(",n,")")), size = 4.5, color = "black") +
   ylim(c(-100,250)) +
   scale_shape_manual(values = c(15,16)) +
   labs(tag = "A")
@@ -918,24 +919,24 @@ FinalBelowground$VarClean <- factor(FinalBelowground$VarClean, levels = rev(c("T
                                                                           "Heterotrophic Rs",
                                                                           "Methane")))
 
-Fig2B <- FinalBelowground %>%
+Fig2C <- FinalBelowground %>%
   group_by(VarClean, Origin, Measurement) %>%
   summarise(n = n(),
             se = sd(pChange)/sqrt(n),
             pChange_mean = mean(pChange),
             pChange_median = median(pChange)) %>%
   ggplot(aes(x = VarClean, y = pChange_mean, shape = Measurement)) +
-  geom_point(size = 3, alpha = .75) +
+  geom_point(size = 4, alpha = .75) +
   geom_errorbar(aes(ymin = pChange_mean - se, ymax = pChange_mean + se), width = 0.2, size = 0.4) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray26") +
   coord_flip() +
   theme_article() +
   theme(axis.title  = element_text(size = 15, color = "black"),
-        axis.text = element_text(size = 12, color = "black"),
+        axis.text = element_text(size = 14, color = "black"),
         strip.text = element_text(size = 15, color = "black"),
         panel.grid.major.y = element_line(color = "gray70", linetype = "dotted"),
         panel.border = element_rect(color = "black"),
-        plot.tag = element_text(face = "bold"),
+        plot.tag = element_text(face = "bold", size = 15),
         legend.position = "none") +
   scale_x_discrete(labels = c("Autotrophic Rs" = expression("Autotrophic R"[s]*""),
                               "Heterotrophic Rs" = expression("Heterotrophic R"[s]*""),
@@ -943,10 +944,10 @@ Fig2B <- FinalBelowground %>%
   xlab("") +
   ylab("% Change due to burning") +
   # annotate("text", label = n, x = Var, y = 220, fontface = "bold.italic", size = 5.5) +
-  geom_text(aes(y = 265, label = paste0("(",n,")")), size = 4, color = "black") +
+  geom_text(aes(y = 265, label = paste0("(",n,")")), size = 4.5, color = "black") +
   ylim(c(-90,280)) +
   scale_shape_manual(values = c(15,16)) +
-  labs(tag = "B")
+  labs(tag = "C")
 
 
 FinalBelowground %>%
@@ -1000,7 +1001,7 @@ FinalTEC$VarClean <- factor(FinalTEC$VarClean, levels = rev(c(
 
 
 
-Fig2C <-
+Fig2E <-
 FinalTEC %>%
   group_by(VarClean, Origin, Measurement) %>%
   summarise(n = n(),
@@ -1008,24 +1009,24 @@ FinalTEC %>%
             pChange_mean = mean(pChange),
             pChange_median = median(pChange)) %>%
   ggplot(aes(x = VarClean, y = pChange_mean, shape = Measurement)) +
-  geom_point(size = 3, alpha = .75) +
+  geom_point(size = 4, alpha = .75) +
   geom_errorbar(aes(ymin = pChange_mean - se, ymax = pChange_mean + se), width = 0.2, size = 0.4) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray26") +
+  coord_flip() +
   theme_article() +
   theme(axis.title  = element_text(size = 15, color = "black"),
-        axis.text = element_text(size = 12, color = "black"),
+        axis.text = element_text(size = 14, color = "black"),
         strip.text = element_text(size = 15, color = "black"),
         panel.grid.major.y = element_line(color = "gray70", linetype = "dotted"),
         panel.border = element_rect(color = "black"),
-        plot.tag = element_text(face = "bold"),
+        plot.tag = element_text(face = "bold", size = 15),
         legend.position = "none") +
   xlab("") +
   ylab("% Change due to burning") +
-  geom_text(aes(y = 42, label = paste0("(",n,")")), size = 4, color = "black") +
+  geom_text(aes(y = 42, label = paste0("(",n,")")), size = 4.5, color = "black") +
   ylim(c(-130,50)) +
   scale_shape_manual(values = c(15,16)) +
-  labs(tag = "C") +
-  coord_flip() +
+  labs(tag = "E") +
   scale_x_discrete(labels = c("Total Ecosystem Carbon" = "Total Ecosystem",
                               "Net Biome Productivity" = "Net Biome \n Productivity",
                               "Net Ecosystem Productivity" = "Net Ecosystem \n Productivity",
@@ -1076,7 +1077,7 @@ map <- rbind(ag.locations, bg.locations, tec.locations)
 map_reduced <- map %>% group_by(Lat,Lon,Datasheet) %>% filter(row_number() == 1)
 
 #Create map----
-Fig2D <- map_reduced %>%
+Fig2B <- map_reduced %>%
   filter(Datasheet == "Aboveground") %>%
   ggplot() + #Plot
   borders("world", colour = "gray20", fill = "gray96", linewidth = 0.25) +
@@ -1088,14 +1089,14 @@ Fig2D <- map_reduced %>%
   ylab("Latitude") +
   theme_article() +
   theme(axis.title  = element_text(size = 15, color = "black"),
-        axis.text = element_text(size = 12, color = "black"),
+        axis.text = element_text(size = 14, color = "black"),
         strip.text = element_text(size = 15, color = "black"),
         panel.grid.major = element_line(color = "gray60", linetype = "dotted"),
         panel.border = element_rect(color = "black"),
         plot.tag = element_text(face = "bold"),
         legend.position = "none") +
-  labs(tag = "D")
-Fig2E <- map_reduced %>%
+  labs(tag = "B")
+Fig2D <- map_reduced %>%
   filter(Datasheet == "Belowground") %>%
   ggplot() + #Plot
   borders("world", colour = "gray20", fill = "gray96", linewidth = 0.25) +
@@ -1107,13 +1108,13 @@ Fig2E <- map_reduced %>%
   ylab("Latitude") +
   theme_article() +
   theme(axis.title  = element_text(size = 15, color = "black"),
-        axis.text = element_text(size = 12, color = "black"),
+        axis.text = element_text(size = 14, color = "black"),
         strip.text = element_text(size = 15, color = "black"),
         panel.grid.major = element_line(color = "gray60", linetype = "dotted"),
         panel.border = element_rect(color = "black"),
         plot.tag = element_text(face = "bold"),
         legend.position = "none") +
-  labs(tag = "E")
+  labs(tag = "D")
 Fig2F <- map_reduced %>%
   filter(Datasheet == "TEC") %>%
   ggplot() + #Plot
@@ -1126,7 +1127,7 @@ Fig2F <- map_reduced %>%
   ylab("Latitude") +
   theme_article() +
   theme(axis.title  = element_text(size = 15, color = "black"),
-        axis.text = element_text(size = 12, color = "black"),
+        axis.text = element_text(size = 14, color = "black"),
         strip.text = element_text(size = 15, color = "black"),
         panel.grid.major = element_line(color = "gray60", linetype = "dotted"),
         panel.border = element_rect(color = "black"),
@@ -1151,7 +1152,121 @@ CCCCFFFFF
 CCCCFFFFF
 CCCCFFFFF
 "
-Fig2A + Fig2B + Fig2C + Fig2D + Fig2E + Fig2F +
+Fig2A + Fig2C + Fig2E  + Fig2B + Fig2D + Fig2F +
   plot_layout(design = plot_design, widths = c(3, 3, 3, 3, 3, 3), heights = c(3.75, 3.75, 3.75, 3.75, 3.75, 3.75))
-ggsave("BurnResponseAndMaps.tiff", dpi = 300, units = c("in"), width = 12, height = 10)
+ggsave("BurnResponseAndMaps3.tiff", dpi = 300, units = c("in"), width = 12, height = 10)
 
+ggsave("ProportionObs.tiff", dpi = 300, units = c("in"), width = 3.5, height = 3.25)
+
+Fig2G <- AG_BG_TEC %>%
+  group_by(Origin, GFEDVegCover) %>%
+  summarise(BiomeTotal = sum(n())) %>%
+  group_by(Origin) %>%
+  mutate(BiomeN = sum(BiomeTotal),
+         BiomeProportion = BiomeTotal/BiomeN) %>%
+  filter(Origin == "AG") %>%
+  ggplot(aes(fill = GFEDVegCover, x = Origin, y = BiomeProportion)) +
+  geom_bar(position = "stack", stat = "identity", alpha = 0.95) +
+  ylab("Proportion of Observations") +
+  xlab("") +
+  theme_article() +
+  theme(axis.title  = element_text(size = 15, color = "black"),
+        axis.text = element_text(size = 14, color = "black"),
+        strip.text = element_text(size = 15, color = "black"),
+        panel.border = element_rect(color = "black"),
+        plot.tag = element_text(face = "bold"),
+        legend.title = element_text(hjust = 0.5)) +
+  guides(fill=guide_legend(title="Biome")) +
+  scale_fill_jama() +
+  labs(tag = "G")
+Fig2H <- AG_BG_TEC %>%
+  group_by(Origin, GFEDVegCover) %>%
+  summarise(BiomeTotal = sum(n())) %>%
+  group_by(Origin) %>%
+  mutate(BiomeN = sum(BiomeTotal),
+         BiomeProportion = BiomeTotal/BiomeN) %>%
+  filter(Origin == "BG") %>%
+  ggplot(aes(fill = GFEDVegCover, x = Origin, y = BiomeProportion)) +
+  geom_bar(position = "stack", stat = "identity", alpha = 0.95) +
+  ylab("Proportion of Observations") +
+  xlab("") +
+  theme_article() +
+  theme(axis.title  = element_text(size = 15, color = "black"),
+        axis.text = element_text(size = 14, color = "black"),
+        strip.text = element_text(size = 15, color = "black"),
+        panel.border = element_rect(color = "black"),
+        plot.tag = element_text(face = "bold"),
+        legend.title = element_text(hjust = 0.5)) +
+  guides(fill=guide_legend(title="Biome")) +
+  scale_fill_jama() +
+  labs(tag = "H")
+Fig2I <- AG_BG_TEC %>%
+  group_by(Origin, GFEDVegCover) %>%
+  summarise(BiomeTotal = sum(n())) %>%
+  group_by(Origin) %>%
+  mutate(BiomeN = sum(BiomeTotal),
+         BiomeProportion = BiomeTotal/BiomeN) %>%
+  filter(Origin == "TEC") %>%
+  ggplot(aes(fill = GFEDVegCover, x = Origin, y = BiomeProportion)) +
+  geom_bar(position = "stack", stat = "identity", alpha = 0.95) +
+  ylab("Proportion of Observations") +
+  xlab("") +
+  theme_article() +
+  theme(axis.title  = element_text(size = 15, color = "black"),
+        axis.text = element_text(size = 14, color = "black"),
+        strip.text = element_text(size = 15, color = "black"),
+        panel.border = element_rect(color = "black"),
+        plot.tag = element_text(face = "bold"),
+        legend.title = element_text(hjust = 0.5)) +
+  guides(fill=guide_legend(title="Biome")) +
+  scale_fill_jama() +
+  labs(tag = "I")
+
+
+setwd("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Figures")
+plot_design <- "
+AAAADDDDDG
+AAAADDDDDG
+AAAADDDDDG
+AAAADDDDDG
+BBBBEEEEEH
+BBBBEEEEEH
+BBBBEEEEEH
+BBBBEEEEEH
+CCCCFFFFFI
+CCCCFFFFFI
+CCCCFFFFFI
+CCCCFFFFFI
+"
+Fig2A + Fig2C + Fig2E  + Fig2B + Fig2D + Fig2F + Fig2G+Fig2H+Fig2I +
+  plot_layout(design = plot_design, guides = "collect")
+ggsave("BurnResponseAndMaps2.tiff", dpi = 300, units = c("in"), width = 14, height = 10)
+
+
+
+
+# Aboveground Stats -------------------------------------------------------
+live <- FinalAboveground %>%
+  filter(VarClean == "Live") %>%
+  dplyr::select(GFEDVegCover, Study_Severity, Control, Burn) %>%
+  pivot_longer(names_to = "treatment", values_to = "LiveC", -c(GFEDVegCover, Study_Severity))
+summary(aov(LiveC ~ treatment*GFEDVegCover*Study_Severity, data = live)) #LiveC is lower in burned, but this does not depend upon biome nor study severity
+
+dead <- FinalAboveground %>%
+  filter(VarClean == "Dead") %>%
+  dplyr::select(GFEDVegCover, Study_Severity, Control, Burn) %>%
+  pivot_longer(names_to = "treatment", values_to = "DeadC", -c(GFEDVegCover, Study_Severity))
+summary(aov(DeadC ~ treatment*GFEDVegCover*Study_Severity, data = dead)) #DeadC is higher in burned, but this does not depend upon biome nor study severity
+TukeyHSD(aov(DeadC ~ treatment*Study_Severity, data = dead))
+ggplot(dead,aes(x = treatment, y = DeadC, color = Study_Severity)) +
+  geom_boxplot()
+
+FinalAboveground %>%
+  filter(VarClean == "Dead") %>%
+  group_by(VarClean, Origin, Measurement, Study_Severity) %>%
+  summarise(n = n(),
+            se = sd(pChange)/sqrt(n),
+            pChange_mean = mean(pChange),
+            pChange_median = median(pChange)) %>%
+  ggplot(aes(x = Study_Severity, y = pChange_mean)) +
+  geom_point()
