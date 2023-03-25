@@ -1,4 +1,5 @@
 #Created by Justin Mathias, 12/28/22
+#
 
 #Housekeeping: load packages, set themes, etc.
 library("easypackages")
@@ -3710,8 +3711,8 @@ GFEDemissionsTime
 # write.xlsx(GFEDemissionsTime, "GFEDemissionsTime.xlsx")
 #
 #
-# GFEDemissions <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Data/GFEDemissions.xlsx")
-# GFEDemissionsTime <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Data/GFEDemissionsTime.xlsx")
+GFEDemissions <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Data/GFEDemissions.xlsx")
+GFEDemissionsTime <- read.xlsx("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Data/GFEDemissionsTime.xlsx")
 
 FigEmis <- GFEDemissions %>%
   filter(Biome != "AGRI", Biome != "DEFO") %>%
@@ -3904,6 +3905,163 @@ g1 + geom_bar(data=dat1 %>% filter(grepl("part", variable)),
 
 
 
+# Scaling GFED emissions by biome area ---------------------------------------------------
+
+#First, extract data for each biome using Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
+biomes <- vect("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp")
+biomes
+ex <- expanse(biomes, transform = TRUE, unit = "ha")
+bm <- biomes$BIOME_NAME
+
+bms <- data.frame("Area_ha" = ex, "Biome" = bm)
+areas <- bms %>% group_by(Biome) %>%
+  summarise(Area_ha_sum = sum(Area_ha))
+
+BORFarea_ha <- areas %>%
+  filter(Biome == "Boreal Forests/Taiga") %>%
+  dplyr::select(Area_ha_sum)
+
+TEMFarea_ha <- areas %>%
+  filter(Biome == "Temperate Broadleaf & Mixed Forests" | Biome == "Temperate Conifer Forests") %>%
+  dplyr::select(Area_ha_sum) %>%
+  summarise(Sum = sum(Area_ha_sum))
+
+SAVAarea_ha <- areas %>%
+  filter(Biome %in% c("Flooded Grasslands & Savannas", "Temperate Grasslands, Savannas & Shrublands", "Tropical & Subtropical Grasslands, Savannas & Shrublands")) %>%
+  dplyr::select(Area_ha_sum) %>%
+  summarise(Sum = sum(Area_ha_sum))
+
+PEATarea_ha <- conv_unit(4230000, from = "km2", to = "hectare") #Area from PEATMAP, https://www.sciencedirect.com/science/article/pii/S0341816217303004
+
+
+#Create df for area
+area_merge <- data.frame(Biome = c("BORF","TEMF","SAVA","PEAT"), area_ha = c(1540041825, #BORFarea_ha
+                                                                             1635444101,#TEMFarea_ha,
+                                                                             3305786312, #SAVAarea_ha,
+                                                                             4.23e+08))#PEATarea_ha
+
+#Add in areas for new figure
+GFEDemissions2 <- GFEDemissions %>% filter(Biome != "DEFO", Biome != "AGRI") %>% left_join(area_merge) %>%
+  mutate(Emissions_kgC_ha = conv_unit(Emissions_PgC, from = "Pg", to = "kg")/area_ha,
+         PlacementValue2 = Emissions_kgC_ha + 20)
+
+
+GFEDemissionsTime2 <- GFEDemissionsTime %>%
+  filter(Biome != "AGRI", Biome != "DEFO") %>%
+  left_join(area_merge) %>%
+  mutate(Emissions_kgC_ha = conv_unit(Emissions_PgC, from = "Pg", to = "kg")/area_ha)
+
+
+GFEDerr2 <-GFEDemissionsTime2 %>%
+  group_by(Biome) %>%
+  summarise(SD = sd(Emissions_kgC_ha),
+            SE = SD/sqrt(length(Emissions_kgC_ha)))
+
+GFEDemissions2 <- GFEDemissions2 %>% dplyr::select(c(-SD, -SE)) %>% left_join(GFEDerr2)
+
+
+
+FigEmis <- GFEDemissions2 %>%
+  filter(Biome != "AGRI", Biome != "DEFO") %>%
+  ggplot(aes(x = reorder(Biome, -Emissions_kgC_ha, mean), y = Emissions_kgC_ha)) +
+  geom_col(aes(fill = Biome), alpha = 0.95, width = 0.75) +
+  geom_errorbar(aes(ymin = Emissions_kgC_ha - SD, ymax = Emissions_kgC_ha + SD), width = 0.2, size = 0.4) +
+  xlab("Biome") +
+  ylab(expression("Emissions (kg C ha"^{-1}*")")) +
+  theme(
+    legend.position = "none",
+    legend.title = element_text(size = 11, family = "Arial"),
+    legend.text = element_text(size = 11, family = "Arial"),
+    legend.background = element_blank(),
+    axis.title.x = element_text(
+      color = "black",
+      size = 14,
+      family = "Arial"),
+    axis.title.y = element_text(
+      color = "black",
+      size = 14,
+      family = "Arial"),
+    axis.text = element_text(
+      color = "black",
+      size = 14,
+      family = "Arial"),
+    panel.border = element_rect(
+      colour = "black",
+      fill = NA,
+      linewidth = .9),
+    panel.background = element_blank(),
+    plot.tag = element_text(
+      family = "Arial",
+      size = 14,
+      face = "bold")) +
+  scale_fill_jama() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray25") +
+#  geom_text(aes(y = PlacementValue2, label = paste0(Emissions_percent, "%")), size = 4, color = "black", fontface = "bold", hjust = -0.65) +
+  labs(tag = "A")
+
+
+FigEmisInset <- GFEDemissionsTime2 %>%
+  filter(Biome != "AGRI", Biome != "DEFO") %>%
+  ggplot(aes(x = Year, y = Emissions_kgC_ha, color = Biome)) +
+  geom_point(alpha = 0.75) +
+  geom_smooth(se = FALSE) +
+  xlab("Year") +
+  ylab(expression("Emissions")) +
+  theme(
+    legend.position = "none",
+    legend.title = element_text(size = 11, family = "Arial"),
+    legend.text = element_text(size = 11, family = "Arial"),
+    legend.background = element_blank(),
+    axis.title.x = element_text(
+      color = "black",
+      size = 14,
+      family = "Arial"),
+    axis.title.y = element_text(
+      color = "black",
+      size = 14,
+      family = "Arial"),
+    axis.text = element_text(
+      color = "black",
+      size = 14,
+      family = "Arial"),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    plot.tag = element_text(
+      family = "Arial",
+      size = 14,
+      face = "bold"),
+    axis.line.x.bottom = element_line(color = "black"),
+    axis.line.y.left = element_line(color = "black"),
+    rect = element_rect(fill = "transparent")
+  ) +
+  scale_color_jama() +
+  scale_x_continuous(breaks = c(2000,2008, 2016))
+
+
+
+#Global ff emissions
+ff <- read.csv("/Users/justinmathias/Downloads/global.1751_2017.csv")
+FF <- ff %>% dplyr::select(Year, TotalCarbonEmissions.from.fossil.fuel.consumption.and.cement.production..million.metric.tons.of.C.) %>%
+  rename("FFemissionsTgC" = "TotalCarbonEmissions.from.fossil.fuel.consumption.and.cement.production..million.metric.tons.of.C.") %>%
+  mutate(FFemissionsPgC = conv_unit(FFemissionsTgC*10^6, from = "metric_ton", "Pg")) %>%
+  dplyr::select(Year, FFemissionsPgC) %>%
+  filter(Year <= 2016, Year >= 1998)
+
+
+#
+# #Original
+# GFEDsummary <- GFEDemissionsTime %>% group_by(Year) %>%
+#   summarise(FireEmissions_PgC = sum(Emissions_PgC))
+#
+# EmissionsAll <- left_join(GFEDsummary, FF) %>%
+#   pivot_longer(names_to = "EmissionsType", values_to = "Emissions_PgC", -Year)
+#
+# EmissionsAllSummary <- EmissionsAll %>%
+#   group_by(EmissionsType) %>%
+#   summarise(SD = sd(Emissions_PgC),
+#             Emissions_PgC = mean(Emissions_PgC)) %>%
+#   mutate(Emissions_percent = round(Emissions_PgC/sum(Emissions_PgC)*100, 0),
+#          PlacementValue = Emissions_PgC + 0.65)
 
 
 
@@ -3911,6 +4069,76 @@ g1 + geom_bar(data=dat1 %>% filter(grepl("part", variable)),
 
 
 
+GFEDsummary <- GFEDemissionsTime %>% group_by(Year) %>%
+  summarise(Emissions_PgC = sum(Emissions_PgC)) %>% #Get sum of GFED fire emissions
+  summarise(SE = sd(Emissions_PgC)/sqrt(n()),
+            Emissions_PgC = mean(Emissions_PgC)) %>%
+  mutate(EmissionsType = "Fire") #Add emissions type
 
+FFemissions <- data.frame(SE = 0.8, Emissions_PgC = 10.9, EmissionsType = "Anthropogenic")
+
+EmissionsAllSummary <- rbind(GFEDsummary, FFemissions)
+
+
+EmissionsAllSummary <- EmissionsAllSummary %>%
+  mutate(PlacementValue = Emissions_PgC + 0.65,
+         Emissions_percent = 100*round(Emissions_PgC/sum(Emissions_PgC), 2))
+
+
+
+
+FigEmisB <-
+  EmissionsAllSummary %>%
+  ggplot(aes(x = EmissionsType, y = Emissions_PgC)) +
+  geom_col(aes(fill = EmissionsType), alpha = 0.95, width = 0.75) +
+  geom_errorbar(aes(ymin = Emissions_PgC - SE, ymax = Emissions_PgC + SE), width = 0.2, size = 0.4) +
+  xlab("Emissions Type") +
+  ylab(expression("Emissions (Pg C)")) +
+  theme(
+    legend.position = "none",
+    legend.title = element_text(size = 11, family = "Arial"),
+    legend.text = element_text(size = 11, family = "Arial"),
+    legend.background = element_blank(),
+    axis.title.x = element_text(
+      color = "black",
+      size = 14,
+      family = "Arial"),
+    axis.title.y = element_text(
+      color = "black",
+      size = 14,
+      family = "Arial"),
+    axis.text = element_text(
+      color = "black",
+      size = 14,
+      family = "Arial"),
+    panel.border = element_rect(
+      colour = "black",
+      fill = NA,
+      linewidth = .9),
+    panel.background = element_blank(),
+    plot.tag = element_text(
+      family = "Arial",
+      size = 14,
+      face = "bold")) +
+  scale_fill_simpsons() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray25") +
+  labs(tag = "B") +
+  scale_x_discrete(labels=c("Fossil \n Fuels", "Wildfire")) #+
+  #geom_text(aes(y = PlacementValue, label = paste0(Emissions_percent, "%")), size = 4, color = "black", fontface = "bold", vjust = 0.5, hjust = -0.4)
+
+
+
+
+plot_design <- "
+AAAAABBB
+AAAAABBB
+AAAAABBB
+"
+
+setwd("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Figures")
+p1 <- FigEmis + inset_element(FigEmisInset, 0.41, 0.42, 0.95,0.945)
+p2 <- FigEmisB
+p1 + p2 + plot_layout(design = plot_design, widths = c(5,2))
+ggsave("GFEDemissionsAnthro.tiff", dpi = 300, units = c("in"), width = 8, height = 4.25)
 
 

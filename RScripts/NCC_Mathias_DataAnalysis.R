@@ -361,6 +361,7 @@ BG6 <- bg %>%
 
 var <- "RootC_StockData_Mg_ha"
 BG7 <- bg %>%
+  filter(RecordID != 1406) %>%
   dplyr::select(RecordID, RecordSubID_old, Treatment,TimeSinceFire_years,Study_Severity,StudyType,GFEDVegCover,var) %>%
   drop_na(var) %>%
   pivot_wider(names_from = Treatment, values_from = var, names_prefix = "") %>%
@@ -527,6 +528,7 @@ TEC5 <- tec %>%
 
 var <- "RootC_StockData_MgC_ha"
 TEC6 <- tec %>%
+  filter(RecordID != 1406) %>%
   dplyr::select(RecordID, RecordSubID_old, Treatment,TimeSinceFire_years,Study_Severity,StudyType,GFEDVegCover,var) %>%
   drop_na(var) %>%
   pivot_wider(names_from = Treatment, values_from = var, names_prefix = "") %>%
@@ -919,7 +921,7 @@ FinalBelowground$VarClean <- factor(FinalBelowground$VarClean, levels = rev(c("T
                                                                           "Heterotrophic Rs",
                                                                           "Methane")))
 
-Fig2C <- FinalBelowground %>%
+Fig2D <- FinalBelowground %>%
   group_by(VarClean, Origin, Measurement) %>%
   summarise(n = n(),
             se = sd(pChange)/sqrt(n),
@@ -947,7 +949,7 @@ Fig2C <- FinalBelowground %>%
   geom_text(aes(y = 265, label = paste0("(",n,")")), size = 4.5, color = "black") +
   ylim(c(-90,280)) +
   scale_shape_manual(values = c(15,16)) +
-  labs(tag = "C")
+  labs(tag = "D")
 
 
 FinalBelowground %>%
@@ -1001,7 +1003,7 @@ FinalTEC$VarClean <- factor(FinalTEC$VarClean, levels = rev(c(
 
 
 
-Fig2E <-
+Fig2G <-
 FinalTEC %>%
   group_by(VarClean, Origin, Measurement) %>%
   summarise(n = n(),
@@ -1026,7 +1028,7 @@ FinalTEC %>%
   geom_text(aes(y = 42, label = paste0("(",n,")")), size = 4.5, color = "black") +
   ylim(c(-130,50)) +
   scale_shape_manual(values = c(15,16)) +
-  labs(tag = "E") +
+  labs(tag = "G") +
   scale_x_discrete(labels = c("Total Ecosystem Carbon" = "Total Ecosystem",
                               "Net Biome Productivity" = "Net Biome \n Productivity",
                               "Net Ecosystem Productivity" = "Net Ecosystem \n Productivity",
@@ -1082,7 +1084,7 @@ Fig2B <- map_reduced %>%
   ggplot() + #Plot
   borders("world", colour = "gray20", fill = "gray96", linewidth = 0.25) +
   # coord_map(projection = "mollweide") +
-  geom_point(aes(x = Lon, y = Lat), size = 1.5, alpha = 0.6) +
+  geom_point(aes(x = Lon, y = Lat, color = GFEDVegCover), size = 1.5, alpha = 0.75) +
   ylim(c(-65,95)) +
   xlim(c(-195,195)) +
   xlab("Longitude") +
@@ -1095,13 +1097,15 @@ Fig2B <- map_reduced %>%
         panel.border = element_rect(color = "black"),
         plot.tag = element_text(face = "bold"),
         legend.position = "none") +
+  scale_color_jama()+
   labs(tag = "B")
-Fig2D <- map_reduced %>%
+ggplotly(Fig2H)
+Fig2E <- map_reduced %>%
   filter(Datasheet == "Belowground") %>%
   ggplot() + #Plot
   borders("world", colour = "gray20", fill = "gray96", linewidth = 0.25) +
   # coord_map(projection = "mollweide") +
-  geom_point(aes(x = Lon, y = Lat), size = 1.5, alpha = 0.6) +
+  geom_point(aes(x = Lon, y = Lat, color = GFEDVegCover), size = 1.5, alpha = 0.75) +
   ylim(c(-65,95)) +
   xlim(c(-195,195)) +
   xlab("Longitude") +
@@ -1114,13 +1118,14 @@ Fig2D <- map_reduced %>%
         panel.border = element_rect(color = "black"),
         plot.tag = element_text(face = "bold"),
         legend.position = "none") +
-  labs(tag = "D")
-Fig2F <- map_reduced %>%
+  scale_color_jama()+
+  labs(tag = "E")
+Fig2H <- map_reduced %>%
   filter(Datasheet == "TEC") %>%
   ggplot() + #Plot
   borders("world", colour = "gray20", fill = "gray96", linewidth = 0.25) +
   # coord_map(projection = "mollweide") +
-  geom_point(aes(x = Lon, y = Lat), size = 1.5, alpha = 0.6) +
+  geom_point(aes(x = Lon, y = Lat, color = GFEDVegCover), size = 1.5, alpha = 0.75) +
   ylim(c(-65,95)) +
   xlim(c(-195,195)) +
   xlab("Longitude") +
@@ -1133,7 +1138,8 @@ Fig2F <- map_reduced %>%
         panel.border = element_rect(color = "black"),
         plot.tag = element_text(face = "bold"),
         legend.position = "none") +
-  labs(tag = "F")
+  scale_color_jama()+
+  labs(tag = "H")
 
 
 
@@ -1158,7 +1164,7 @@ ggsave("BurnResponseAndMaps3.tiff", dpi = 300, units = c("in"), width = 12, heig
 
 ggsave("ProportionObs.tiff", dpi = 300, units = c("in"), width = 3.5, height = 3.25)
 
-Fig2G <- AG_BG_TEC %>%
+Fig2C <- AG_BG_TEC %>%
   group_by(Origin, GFEDVegCover) %>%
   summarise(BiomeTotal = sum(n())) %>%
   group_by(Origin) %>%
@@ -1175,11 +1181,12 @@ Fig2G <- AG_BG_TEC %>%
         strip.text = element_text(size = 15, color = "black"),
         panel.border = element_rect(color = "black"),
         plot.tag = element_text(face = "bold"),
-        legend.title = element_text(hjust = 0.5)) +
+        legend.title = element_text(hjust = 0.5),
+        legend.position = "bottom") +
   guides(fill=guide_legend(title="Biome")) +
   scale_fill_jama() +
-  labs(tag = "G")
-Fig2H <- AG_BG_TEC %>%
+  labs(tag = "C")
+Fig2F <- AG_BG_TEC %>%
   group_by(Origin, GFEDVegCover) %>%
   summarise(BiomeTotal = sum(n())) %>%
   group_by(Origin) %>%
@@ -1196,10 +1203,11 @@ Fig2H <- AG_BG_TEC %>%
         strip.text = element_text(size = 15, color = "black"),
         panel.border = element_rect(color = "black"),
         plot.tag = element_text(face = "bold"),
-        legend.title = element_text(hjust = 0.5)) +
+        legend.title = element_text(hjust = 0.5),
+        legend.position = "bottom") +
   guides(fill=guide_legend(title="Biome")) +
   scale_fill_jama() +
-  labs(tag = "H")
+  labs(tag = "F")
 Fig2I <- AG_BG_TEC %>%
   group_by(Origin, GFEDVegCover) %>%
   summarise(BiomeTotal = sum(n())) %>%
@@ -1217,7 +1225,8 @@ Fig2I <- AG_BG_TEC %>%
         strip.text = element_text(size = 15, color = "black"),
         panel.border = element_rect(color = "black"),
         plot.tag = element_text(face = "bold"),
-        legend.title = element_text(hjust = 0.5)) +
+        legend.title = element_text(hjust = 0.5),
+        legend.position = "bottom") +
   guides(fill=guide_legend(title="Biome")) +
   scale_fill_jama() +
   labs(tag = "I")
@@ -1225,20 +1234,20 @@ Fig2I <- AG_BG_TEC %>%
 
 setwd("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Figures")
 plot_design <- "
-AAAADDDDDG
-AAAADDDDDG
-AAAADDDDDG
-AAAADDDDDG
-BBBBEEEEEH
-BBBBEEEEEH
-BBBBEEEEEH
-BBBBEEEEEH
-CCCCFFFFFI
-CCCCFFFFFI
-CCCCFFFFFI
-CCCCFFFFFI
+AAAABBBBBC
+AAAABBBBBC
+AAAABBBBBC
+AAAABBBBBC
+DDDDEEEEEF
+DDDDEEEEEF
+DDDDEEEEEF
+DDDDEEEEEF
+GGGGHHHHHI
+GGGGHHHHHI
+GGGGHHHHHI
+GGGGHHHHHI
 "
-Fig2A + Fig2C + Fig2E  + Fig2B + Fig2D + Fig2F + Fig2G+Fig2H+Fig2I +
+Fig2A + Fig2B + Fig2C  + Fig2D + Fig2E + Fig2F + Fig2G+Fig2H+Fig2I +
   plot_layout(design = plot_design, guides = "collect")
 ggsave("BurnResponseAndMaps2.tiff", dpi = 300, units = c("in"), width = 14, height = 10)
 
