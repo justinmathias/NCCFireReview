@@ -45,40 +45,64 @@ map %>%
 
 
 # Carbon stocks -----------------------------------------------------------
-#Load in data
-biomes <- vect("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp") #World biomes from: Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
-agb <- rast("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Global_Maps_C_Density_2010_1763/data/aboveground_biomass_carbon_2010.tif")
-bgb <- rast("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Global_Maps_C_Density_2010_1763/data/belowground_biomass_carbon_2010.tif")
+job({ #Run all of this as a job in the background
+  #First, extract data for each biome using Dinerstein et al., 2017, An Ecoregion-Based Approach to Protecting Half the Terrestrial Realm
+  biomes <- vect("/Users/justinmathias/Library/CloudStorage/Dropbox/Dual Isotope/Data/Shapefiles/Ecoregions2017/Ecoregions2017.shp") #Load biomes shapefile
 
-AGB_MgC_ha <- agb*0.1 #Multiply by scale factor (see Spawn et al. 2020, Table 7)
-rm(agb) #Don't need agb anymore
-agb_area_ha <- cellSize(AGB_MgC_ha, unit = "ha") #Calculate area of each grid cell in hectares
-AGB_PgC <- conv_unit(AGB_MgC_ha*agb_area_ha, from = "Mg", to = "Pg") #Calculate total C in Megagrams per grid cell, then convert to Petagrams
+  biome.names.old <- unique(biomes$BIOME_NAME) #Identify old biomes to reclassify
 
-BGB_MgC_ha <- bgb*0.1 #Multiply by scale factor (see Spawn et al. 2020, Table 7)
-rm(bgb) #Don't need bgb anymore
-BGB_PgC <- conv_unit(BGB_MgC_ha*agb_area_ha, from = "Mg", to = "Pg") #Calculate total C in Megagrams per grid cell, then convert to Petagrams
+  lookup.table <- c("Tundra" = "AlpineBorealForest", #Store these old values in a lookup table with new values assigned.
+                    "Tropical & Subtropical Moist Broadleaf Forests" = "TropicalForest",
+                    "Mediterranean Forests, Woodlands & Scrub" = "Mediterranean",
+                    "Deserts & Xeric Shrublands" = "Desert",
+                    "Temperate Grasslands, Savannas & Shrublands" = "TemperateGrassland",
+                    "Boreal Forests/Taiga" = "AlpineBorealForest",
+                    "Temperate Conifer Forests" = "TemperateForest",
+                    "Temperate Broadleaf & Mixed Forests" = "TemperateForest",
+                    "Montane Grasslands & Shrublands" = "AlpineBorealForest",
+                    "Mangroves" = "N/A",
+                    "Flooded Grasslands & Savannas" = "FloodedGrassland",
+                    "Tropical & Subtropical Grasslands, Savannas & Shrublands" = "TropicalGrassland",
+                    "Tropical & Subtropical Dry Broadleaf Forests" = "TropicalForest",
+                    "Tropical & Subtropical Coniferous Forests" = "TropicalForest",
+                    "N/A" = "N/A")
 
-#Rasterize biomes SpatVector to same resolution as AGB_MgC
-Biomes <- rasterize(biomes, AGB_PgC, "BIOME_NAME")
+  biomes$BIOME_RENAMED <- lookup.table[biomes$BIOME_NAME] #Create new column for renamed biomes, referencing original biomes
 
+  #Determine above and belowground carbon in each biome----
+  agb <- rast("/Users/justinmathias/Library/CloudStorage/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Global_Maps_C_Density_2010_1763/data/aboveground_biomass_carbon_2010.tif") #Load AGB and BGB data
+  bgb <- rast("/Users/justinmathias/Library/CloudStorage/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Global_Maps_C_Density_2010_1763/data/belowground_biomass_carbon_2010.tif")
 
+  AGB_MgC_ha <- agb*0.1 #Multiply by scale factor (see Spawn et al. 2020, Table 7)
+  rm(agb) #Don't need agb anymore, remove as to not be confused
+  cellarea_ha <- cellSize(AGB_MgC_ha, unit = "ha") #Calculate area of each grid cell in hectares
+  AGB_PgC <- conv_unit(AGB_MgC_ha*cellarea_ha, from = "Mg", to = "Pg") #Calculate total C in Megagrams per grid cell, then convert to Petagrams
 
-#Calculate sum of C for each biome
-AGB_MgC_Biomes <- zonal(AGB_PgC, Biomes, "sum", na.rm = TRUE)
-BGB_MgC_Biomes <- zonal(BGB_PgC, Biomes, "sum", na.rm = TRUE)
-#Calculate total area (i.e., sum) for each biome
-area_Biomes <- zonal(agb_area_ha, Biomes, "sum", na.rm = TRUE)
+  BGB_MgC_ha <- bgb*0.1 #Multiply by scale factor (see Spawn et al. 2020, Table 7)
+  rm(bgb) #Don't need bgb anymore, remove as to not be confused
+  BGB_PgC <- conv_unit(BGB_MgC_ha*cellarea_ha, from = "Mg", to = "Pg") #Calculate total C in Megagrams per grid cell, then convert to Petagrams
+
+  Biomes <- rasterize(biomes, AGB_PgC, "BIOME_RENAMED") #Rasterize biomes SpatVector to same resolution as AGB_PgC and BGB_PgC
+
+  #Calculate sum of C for each biome in Pg
+  AGB_PgC_Biomes <- zonal(AGB_PgC, Biomes, "sum", na.rm = TRUE)
+  BGB_PgC_Biomes <- zonal(BGB_PgC, Biomes, "sum", na.rm = TRUE)
+  #Calculate total area (i.e., sum) for each biome
+  area_Biomes <- zonal(cellarea_ha, Biomes, "sum", na.rm = TRUE)
+})
 
 #Create dataframe of above- and belowground carbon
-BiomeCarbon <- list(AGB_MgC_Biomes, BGB_MgC_Biomes, area_Biomes) %>% reduce(left_join, by = "BIOME_NAME") %>% #Join zonal summaries
+BiomeCarbon <- list(AGB_PgC_Biomes, BGB_PgC_Biomes, area_Biomes) %>% reduce(left_join, by = "BIOME_RENAMED") %>% #Join zonal summaries
   mutate(AGBtoBGB = aboveground_biomass_carbon_2010/belowground_biomass_carbon_2010) %>% #Create column for ratio of above- to belowground biomass
-  rename(Biome = BIOME_NAME, AGB_PgC = aboveground_biomass_carbon_2010, BGB_PgC = belowground_biomass_carbon_2010, Area_ha = area) %>% #Rename columns for readability
-  filter(Biome != "N/A") %>% #Remove rock and ice
-  mutate(AGB_MgC_ha = conv_unit(AGB_PgC/Area_ha, from = "Pg", to = "Mg"), #Convert back to Mg from Pg
-         BGB_MgC_ha = conv_unit(BGB_PgC/Area_ha, from = "Pg", to = "Mg"), #Convert back to Mg from Pg
-         Total_PgC = AGB_PgC + BGB_PgC, #Calculate total C (sum of above and belowground)
-         Total_MgC_ha = conv_unit(Total_PgC/Area_ha, from = "Pg", to = "Mg"), #Calculate total C per ha
+  rename(Biome = BIOME_RENAMED, AGB_PgC = aboveground_biomass_carbon_2010, BGB_PgC = belowground_biomass_carbon_2010, Area_ha = area) %>% #Rename columns for readability
+  mutate(area_Sum = sum(Area_ha)) %>% #Calculate sum of total land area before removing mangroves, rock and ice
+  filter(Biome != "N/A") %>% #Remove mangroves and rock and ice
+  mutate(AGB_MgC_ha = (conv_unit(AGB_PgC, from = "Pg", to = "Mg")/Area_ha), #Convert back to Mg from Pg
+         BGB_MgC_ha = (conv_unit(BGB_PgC, from = "Pg", to = "Mg")/Area_ha), #Convert back to Mg from Pg
+         Total_PgC = AGB_PgC + BGB_PgC, #Calculate total C, sum of above and belowground
+         Total_MgC_ha = (conv_unit(Total_PgC, from = "Pg", to = "Mg")/Area_ha), #Calculate total C per ha
          BGB_PgC_below = BGB_PgC*-1, #Create negative values for BGB for certain plots for data visualization
          BGB_MgC_ha_below = BGB_MgC_ha*-1,#Create negative values for BGB for certain plots for data visualization
-         area_Percent = Area_ha/13402114579*100) #Calculate percent area of Earth covered
+         area_Percent2 = Area_ha/area_Sum*100) #Calculate percent land area of Earth covered
+
+
