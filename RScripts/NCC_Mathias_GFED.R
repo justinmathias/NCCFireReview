@@ -3965,6 +3965,7 @@ FigEmis <- GFEDemissions2 %>%
   filter(Biome != "AGRI", Biome != "DEFO") %>%
   ggplot(aes(x = reorder(Biome, -Emissions_kgC_ha, mean), y = Emissions_kgC_ha)) +
   geom_col(aes(fill = Biome), alpha = 0.95, width = 0.75) +
+  scale_fill_manual(values = c("#4b9a7a","#ADAF71", "#7371af", "#9A4B6B")) +
   geom_errorbar(aes(ymin = Emissions_kgC_ha - SD, ymax = Emissions_kgC_ha + SD), width = 0.2, size = 0.4) +
   xlab("Biome") +
   ylab(expression("Emissions (kg C ha"^{-1}*")")) +
@@ -3994,7 +3995,6 @@ FigEmis <- GFEDemissions2 %>%
       family = "Arial",
       size = 14,
       face = "bold")) +
-  scale_fill_jama() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray25") +
 #  geom_text(aes(y = PlacementValue2, label = paste0(Emissions_percent, "%")), size = 4, color = "black", fontface = "bold", hjust = -0.65) +
   labs(tag = "A")
@@ -4034,15 +4034,15 @@ FigEmisInset <- GFEDemissionsTime2 %>%
     axis.line.y.left = element_line(color = "black"),
     rect = element_rect(fill = "transparent")
   ) +
-  scale_color_jama() +
+  scale_color_manual(values = c("#4b9a7a","#ADAF71", "#7371af", "#9A4B6B")) +
   scale_x_continuous(breaks = c(2000,2008, 2016))
 
 
 
 #Global ff emissions
-ff <- read.csv("/Users/justinmathias/Downloads/global.1751_2017.csv")
-FF <- ff %>% dplyr::select(Year, TotalCarbonEmissions.from.fossil.fuel.consumption.and.cement.production..million.metric.tons.of.C.) %>%
-  rename("FFemissionsTgC" = "TotalCarbonEmissions.from.fossil.fuel.consumption.and.cement.production..million.metric.tons.of.C.") %>%
+ff <- read.csv("/Users/justinmathias/Downloads/global_1751_2017.csv")
+FF <- ff %>% dplyr::select(Year, Total.carbon.emissions.from.fossil.fuel.consumption.and.cement.production..million.metric.tons.of.C.) %>%
+  rename("FFemissionsTgC" = "Total.carbon.emissions.from.fossil.fuel.consumption.and.cement.production..million.metric.tons.of.C.") %>%
   mutate(FFemissionsPgC = conv_unit(FFemissionsTgC*10^6, from = "metric_ton", "Pg")) %>%
   dplyr::select(Year, FFemissionsPgC) %>%
   filter(Year <= 2016, Year >= 1998)
@@ -4120,7 +4120,7 @@ FigEmisB <-
       family = "Arial",
       size = 14,
       face = "bold")) +
-  scale_fill_simpsons() +
+  scale_fill_manual(values = c("#45A3BA","#BA5C45")) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray25") +
   labs(tag = "B") +
   scale_x_discrete(labels=c("Fossil \n Fuels", "Wildfire")) #+
@@ -4139,6 +4139,6 @@ setwd("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Figure
 p1 <- FigEmis + inset_element(FigEmisInset, 0.41, 0.42, 0.95,0.945)
 p2 <- FigEmisB
 p1 + p2 + plot_layout(design = plot_design, widths = c(5,2))
-ggsave("GFEDemissionsAnthro.tiff", dpi = 300, units = c("in"), width = 8, height = 4.25)
+ggsave("GFEDemissionsAnthro2.tiff", dpi = 300, units = c("in"), width = 8, height = 4.25)
 
 
