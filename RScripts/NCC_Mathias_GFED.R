@@ -3795,7 +3795,7 @@ FigEmisInset <- GFEDemissionsTime %>%
 
 
 #Global ff emissions
-ff <- read.csv("/Users/justinmathias/Downloads/global.1751_2017.csv")
+ff <- read.csv("/Users/justinmathias/Library/CloudStorage/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Data/global_1751_2017.csv")
 FF <- ff %>% dplyr::select(Year, TotalCarbonEmissions.from.fossil.fuel.consumption.and.cement.production..million.metric.tons.of.C.) %>%
   rename("FFemissionsTgC" = "TotalCarbonEmissions.from.fossil.fuel.consumption.and.cement.production..million.metric.tons.of.C.") %>%
   mutate(FFemissionsPgC = conv_unit(FFemissionsTgC*10^6, from = "metric_ton", "Pg")) %>%
@@ -4040,7 +4040,7 @@ FigEmisInset <- GFEDemissionsTime2 %>%
 
 
 #Global ff emissions
-ff <- read.csv("/Users/justinmathias/Downloads/global_1751_2017.csv")
+ff <- read.csv("/Users/justinmathias/Library/CloudStorage/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Data/global_1751_2017.csv")
 FF <- ff %>% dplyr::select(Year, Total.carbon.emissions.from.fossil.fuel.consumption.and.cement.production..million.metric.tons.of.C.) %>%
   rename("FFemissionsTgC" = "Total.carbon.emissions.from.fossil.fuel.consumption.and.cement.production..million.metric.tons.of.C.") %>%
   mutate(FFemissionsPgC = conv_unit(FFemissionsTgC*10^6, from = "metric_ton", "Pg")) %>%
