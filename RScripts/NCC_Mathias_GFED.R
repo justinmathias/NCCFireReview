@@ -4070,7 +4070,7 @@ FF <- ff %>% dplyr::select(Year, Total.carbon.emissions.from.fossil.fuel.consump
 
 
 GFEDsummary <- GFEDemissionsTime %>% group_by(Year) %>%
-  summarise(Emissions_PgC = sum(Emissions_PgC)) %>% #Get sum of GFED fire emissions
+  summarise(Emissions_PgC = sum(Emissions_PgC)- 0.4610342) %>% #Get sum of GFED fire emissions, take out agri and defo
   summarise(SE = sd(Emissions_PgC)/sqrt(n()),
             Emissions_PgC = mean(Emissions_PgC)) %>%
   mutate(EmissionsType = "Fire") #Add emissions type
@@ -4123,7 +4123,7 @@ FigEmisB <-
   scale_fill_manual(values = c("#45A3BA","#BA5C45")) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray25") +
   labs(tag = "B") +
-  scale_x_discrete(labels=c("Fossil \n Fuels", "Wildfire")) #+
+  scale_x_discrete(labels=c("Fossil Fuels", "Wildfire")) #+
   #geom_text(aes(y = PlacementValue, label = paste0(Emissions_percent, "%")), size = 4, color = "black", fontface = "bold", vjust = 0.5, hjust = -0.4)
 
 
@@ -4138,7 +4138,7 @@ AAAAABBB
 setwd("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/NCCFireReview/Figures")
 p1 <- FigEmis + inset_element(FigEmisInset, 0.41, 0.42, 0.95,0.945)
 p2 <- FigEmisB
-p1 + p2 + plot_layout(design = plot_design, widths = c(5,2))
-ggsave("GFEDemissionsAnthro2.tiff", dpi = 300, units = c("in"), width = 8, height = 4.25)
+p1 + p2 + plot_layout(design = plot_design, widths = c(5,3))
+ggsave("GFEDemissionsAnthro3.tiff", dpi = 300, units = c("in"), width = 8, height = 4.25)
 
 

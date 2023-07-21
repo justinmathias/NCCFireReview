@@ -14,20 +14,20 @@ biomes <- vect("/Users/justinmathias/Library/CloudStorage/Dropbox/Dual Isotope/D
 
 biome.names.old <- unique(biomes$BIOME_NAME) #Identify old biomes to reclassify
 
-lookup.table <- c("Tundra" = "AlpineBorealForest", #Store these old values in a lookup table with new values assigned.
-                  "Tropical & Subtropical Moist Broadleaf Forests" = "TropicalForest",
+lookup.table <- c("Tundra" = "Tundra", #Store these old values in a lookup table with new values assigned.
+                  "Tropical & Subtropical Moist Broadleaf Forests" = "Tropical Forests",
+                  "Tropical & Subtropical Dry Broadleaf Forests" = "Tropical Forests",
+                  "Tropical & Subtropical Coniferous Forests" = "Tropical Forests",
+                  "Tropical & Subtropical Grasslands, Savannas & Shrublands" = "Grasslands, Savannas & Shrublands",
+                  "Temperate Grasslands, Savannas & Shrublands" = "Grasslands, Savannas & Shrublands",
+                  "Montane Grasslands & Shrublands" = "Grasslands, Savannas & Shrublands",
                   "Mediterranean Forests, Woodlands & Scrub" = "Mediterranean",
-                  "Deserts & Xeric Shrublands" = "Desert",
-                  "Temperate Grasslands, Savannas & Shrublands" = "TemperateGrassland",
-                  "Boreal Forests/Taiga" = "AlpineBorealForest",
-                  "Temperate Conifer Forests" = "TemperateForest",
-                  "Temperate Broadleaf & Mixed Forests" = "TemperateForest",
-                  "Montane Grasslands & Shrublands" = "AlpineBorealForest",
+                  "Deserts & Xeric Shrublands" = "Deserts",
+                  "Boreal Forests/Taiga" = "Boreal Forests",
+                  "Temperate Conifer Forests" = "Temperate Conifer Forests",
+                  "Temperate Broadleaf & Mixed Forests" = "Temperate Broadleaf Forests",
+                  "Flooded Grasslands & Savannas" = "N/A",
                   "Mangroves" = "N/A",
-                  "Flooded Grasslands & Savannas" = "FloodedGrassland",
-                  "Tropical & Subtropical Grasslands, Savannas & Shrublands" = "TropicalGrassland",
-                  "Tropical & Subtropical Dry Broadleaf Forests" = "TropicalForest",
-                  "Tropical & Subtropical Coniferous Forests" = "TropicalForest",
                   "N/A" = "N/A")
 
 biomes$BIOME_RENAMED <- lookup.table[biomes$BIOME_NAME] #Create new column for renamed biomes, referencing original biomes

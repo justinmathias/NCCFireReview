@@ -3,8 +3,8 @@
 
 #Housekeeping: load packages, set themes, etc.
 library("easypackages")
-libraries(c("terra", "ggsci", "ggthemes", "RColorBrewer", "measurements", "stringr", "rayshader", "egg", "rgdal", "openxlsx", "shiny", "shinydashboard",
-            "plotly", "wordcloud", "tm", "soilDB", "aqp", "rhdf5", "tidyverse", "rhdf5", "ncdf4", "raster", "patchwork", "job"))
+libraries(c("terra", "ggsci", "ggthemes", "RColorBrewer", "measurements", "stringr", "egg", "rgdal", "openxlsx", "shiny", "shinydashboard",
+            "plotly", "wordcloud", "tm", "soilDB", "aqp", "rhdf5", "tidyverse", "rhdf5", "ncdf4", "raster", "patchwork", "job", "viridis"))
 
 #Load files.
 #If you're reading this i know i should have used loops or apply, but i'm lazy
@@ -29,7 +29,7 @@ gfed2014ras <- brick("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Natur
 gfed2015ras <- brick("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/GFED/fire_emissions_v4_R1_1293/data/GFED4.1s_2015.hdf5")
 gfed2016ras <- brick("/Users/justinmathias/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/GFED/fire_emissions_v4_R1_1293/data/GFED4.1s_2016.hdf5")
 
-#Set extent and CRS of each raster. Determine burned fraction for each pixel.
+#Set extent and CRS of each raster. Determine burned area fraction for each pixel.
 job({
   #Set extent of each raster
   extent(gfed1997ras) <- extent(-179.875, 179.875, -89.875, 89.875)
@@ -422,16 +422,39 @@ lookup.table <- c("Tundra" = "Tundra", #Store these old values in a lookup table
                   "N/A" = "N/A")
 biomes$BIOME_RENAMED <- lookup.table[biomes$BIOME_NAME] #Create new column for renamed biomes, referencing original biomes
 
-Tundra <- biomes %>% filter(BIOME_RENAMED == "Tundra")
-TropicalForests <- biomes %>% filter(BIOME_RENAMED == "Tropical Forests")
-Mediterranean <- biomes %>% filter(BIOME_RENAMED == "Mediterranean")
-Deserts <- biomes %>% filter(BIOME_RENAMED == "Deserts")
-GrasslandsSavannasShrublands <- biomes %>% filter(BIOME_RENAMED == "Grasslands, Savannas & Shrublands")
-BorealForests <- biomes %>% filter(BIOME_RENAMED == "Boreal Forests")
-TemperateConiferForests <- biomes %>% filter(BIOME_RENAMED == "Temperate Conifer Forests")
-TemperateBroadleafForests <- biomes %>% filter(BIOME_RENAMED == "Temperate Broadleaf Forests")
+#Subset spatvector based on renamed biome
+Tundra <- terra::subset(biomes, biomes$BIOME_RENAMED == "Tundra")
+TropicalForests <- terra::subset(biomes, biomes$BIOME_RENAMED == "Tropical Forests")
+Mediterranean <- terra::subset(biomes, biomes$BIOME_RENAMED == "Mediterranean")
+Deserts <- terra::subset(biomes, biomes$BIOME_RENAMED == "Deserts")
+GrasslandsSavannasShrublands <- terra::subset(biomes, biomes$BIOME_RENAMED == "Grasslands, Savannas & Shrublands")
+BorealForests <- terra::subset(biomes, biomes$BIOME_RENAMED == "Boreal Forests")
+TemperateConiferForests <- terra::subset(biomes, biomes$BIOME_RENAMED == "Temperate Conifer Forests")
+TemperateBroadleafForests <- terra::subset(biomes, biomes$BIOME_RENAMED == "Temperate Broadleaf Forests")
 
 
+#Load aboveground and belowground carbon rasters----
+agb <- rast("/Users/justinmathias/Library/CloudStorage/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Global_Maps_C_Density_2010_1763/data/aboveground_biomass_carbon_2010.tif")
+bgb <- rast("/Users/justinmathias/Library/CloudStorage/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Global_Maps_C_Density_2010_1763/data/belowground_biomass_carbon_2010.tif")
+
+AGB_MgC_ha <- agb*0.1 #Multiply by scale factor (see Spawn et al. 2020, Table 7)
+cellarea_ha <- cellSize(AGB_MgC_ha, unit = "ha") #Calculate area of each grid cell in hectares
+AGB_MgC <- AGB_MgC_ha*cellarea_ha #Calculate
+
+BGB_MgC_ha <- bgb*0.1 #Multiply by scale factor (see Spawn et al. 2020, Table 7)
+cellarea_ha <- cellSize(BGB_MgC_ha, unit = "ha") #Calculate area of each grid cell in hectares
+BGB_MgC <- BGB_MgC_ha*cellarea_ha #Calculate
+
+BurnedArea_km2 <- rast(burnedarea_km2) #Convert to SpatRaster
+AGB_MgC_resampled <- resample(AGB_MgC, BurnedArea_km2) #Resample to BurnedArea dimensions
+BGB_MgC_resampled <- resample(BGB_MgC, BurnedArea_km2) #Resample to BurnedArea dimensions
+
+AGB_MgC_resampled_NAs <- AGB_MgC_resampled
+AGB_MgC_resampled_NAs[AGB_MgC_resampled_NAs == 0] <- NA
+BGB_MgC_resampled_NAs <- BGB_MgC_resampled
+BGB_MgC_resampled_NAs[BGB_MgC_resampled_NAs == 0] <- NA
+
+#Mask each raster by its biome
 Tundra_AGB_MgC <- mask(AGB_MgC_resampled_NAs, Tundra)
 TropicalForests_AGB_MgC <- mask(AGB_MgC_resampled_NAs, TropicalForests)
 Mediterranean_AGB_MgC <- mask(AGB_MgC_resampled_NAs, Mediterranean)
@@ -441,8 +464,14 @@ BorealForests_AGB_MgC <- mask(AGB_MgC_resampled_NAs, BorealForests)
 TemperateConiferForests_AGB_MgC <- mask(AGB_MgC_resampled_NAs, TemperateConiferForests)
 TemperateBroadleafForests_AGB_MgC <- mask(AGB_MgC_resampled_NAs, TemperateBroadleafForests)
 
-
-
+Tundra_BGB_MgC <- mask(BGB_MgC_resampled_NAs, Tundra)
+TropicalForests_BGB_MgC <- mask(BGB_MgC_resampled_NAs, TropicalForests)
+Mediterranean_BGB_MgC <- mask(BGB_MgC_resampled_NAs, Mediterranean)
+Deserts_BGB_MgC <- mask(BGB_MgC_resampled_NAs, Deserts)
+GrasslandsSavannasShrublands_BGB_MgC <- mask(BGB_MgC_resampled_NAs, GrasslandsSavannasShrublands)
+BorealForests_BGB_MgC <- mask(BGB_MgC_resampled_NAs, BorealForests)
+TemperateConiferForests_BGB_MgC <- mask(BGB_MgC_resampled_NAs, TemperateConiferForests)
+TemperateBroadleafForests_BGB_MgC <- mask(BGB_MgC_resampled_NAs, TemperateBroadleafForests)
 
 
 #Define function to get raster corresponding to quantiles
@@ -469,6 +498,8 @@ GrasslandsSavannasShrublands_AGB_MgC_Qtl <- raster2quantile(GrasslandsSavannasSh
 BorealForests_AGB_MgC_Qtl <- raster2quantile(BorealForests_AGB_MgC)
 TemperateConiferForests_AGB_MgC_Qtl <- raster2quantile(TemperateConiferForests_AGB_MgC)
 TemperateBroadleafForests_AGB_MgC_Qtl <- raster2quantile(TemperateBroadleafForests_AGB_MgC)
+BiomeAgnostic_AGB_MgC_Qtl <- raster2quantile(AGB_MgC_resampled_NAs)
+
 
 AGBBiomesQtlCombined <- terra::mosaic(Tundra_AGB_MgC_Qtl,
                                    TropicalForests_AGB_MgC_Qtl,
@@ -480,21 +511,31 @@ AGBBiomesQtlCombined <- terra::mosaic(Tundra_AGB_MgC_Qtl,
                                    TemperateBroadleafForests_AGB_MgC_Qtl,
                                    fun=max)
 
-plot(BiomesQtlCombined)
-
-#Load aboveground carbon raster----
-agb <- rast("/Users/justinmathias/Library/CloudStorage/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Global_Maps_C_Density_2010_1763/data/aboveground_biomass_carbon_2010.tif")
-
-AGB_MgC_ha <- agb*0.1 #Multiply by scale factor (see Spawn et al. 2020, Table 7)
-cellarea_ha <- cellSize(AGB_MgC_ha, unit = "ha") #Calculate area of each grid cell in hectares
-AGB_MgC <- AGB_MgC_ha*cellarea_ha #Calculate
 
 
-BurnedArea_km2 <- rast(burnedarea_km2) #Convert to SpatRaster
-AGB_MgC_resampled <- resample(AGB_MgC, BurnedArea_km2) #Resample to BurnedArea dimensions
 
-AGB_MgC_resampled_NAs <- AGB_MgC_resampled
-AGB_MgC_resampled_NAs[AGB_MgC_resampled_NAs == 0] <- NA
+
+Tundra_BGB_MgC_Qtl <- raster2quantile(Tundra_BGB_MgC) #repeat for belowground
+TropicalForests_BGB_MgC_Qtl <- raster2quantile(TropicalForests_BGB_MgC)
+Mediterranean_BGB_MgC_Qtl <- raster2quantile(Mediterranean_BGB_MgC)
+Deserts_BGB_MgC_Qtl <- raster2quantile(Deserts_BGB_MgC)
+GrasslandsSavannasShrublands_BGB_MgC_Qtl <- raster2quantile(GrasslandsSavannasShrublands_BGB_MgC)
+BorealForests_BGB_MgC_Qtl <- raster2quantile(BorealForests_BGB_MgC)
+TemperateConiferForests_BGB_MgC_Qtl <- raster2quantile(TemperateConiferForests_BGB_MgC)
+TemperateBroadleafForests_BGB_MgC_Qtl <- raster2quantile(TemperateBroadleafForests_BGB_MgC)
+BiomeAgnostic_BGB_MgC_Qtl <- raster2quantile(BGB_MgC_resampled_NAs)
+
+
+BGBBiomesQtlCombined <- terra::mosaic(Tundra_BGB_MgC_Qtl,
+                                      TropicalForests_BGB_MgC_Qtl,
+                                      Mediterranean_BGB_MgC_Qtl,
+                                      Deserts_BGB_MgC_Qtl,
+                                      GrasslandsSavannasShrublands_BGB_MgC_Qtl,
+                                      BorealForests_BGB_MgC_Qtl,
+                                      TemperateConiferForests_BGB_MgC_Qtl,
+                                      TemperateBroadleafForests_BGB_MgC_Qtl,
+                                      fun=max)
+
 
 
 
@@ -532,15 +573,17 @@ BurnedBiomesQtlCombined <- terra::mosaic(Tundra_BurnedArea_km2_Qtl,
                                    TemperateBroadleafForests_BurnedArea_km2_Qtl,
                                    fun=max)
 
+BiomeAgnostic_BurnedArea_km2_Qtl <- raster2quantile(BurnedArea_km2_NAs)
+
+
 #Final plots
 #PANEL C
 ggplot() +
-  geom_spatraster(data = AGBBiomesQtlCombined*BurnedBiomesQtlCombined)+
+  geom_spatraster(data = BiomeAgnostic_AGB_MgC_Qtl*BiomeAgnostic_BurnedArea_km2_Qtl)+
   geom_polygon(data = world.shp, aes(x = long, y = lat, group = group), color = 'gray20', fill = NA, size = 0.08) +
   scale_fill_whitebox_c(
     palette = "muted",
     na.value = "white",
-    name = "ln(AGB)"
   ) +
   # coord_sf(crs = st_crs("ESRI:54009")) +
   theme_map() +
@@ -553,9 +596,12 @@ ggplot() +
 #Map color to biome, alpha to value
 #Layer the two rasters into one multi-band raster for easier manipulation
 
-BiomesRast <- rast(biomes)
-BIOMES <- vect("/Users/justinmathias/Library/CloudStorage/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp")
 
+
+
+
+#Create a raster from the biomes map at the resolution of burned area
+BIOMES <- vect("/Users/justinmathias/Library/CloudStorage/Dropbox/Research/UIdaho Postdoc/Nature Climate Change review/Ecoregions2017/Ecoregions2017.shp")
 lookup.table <- c("Tundra" = "Tundra", #Store these old values in a lookup table with new values assigned.
                   "Tropical & Subtropical Moist Broadleaf Forests" = "Tropical Forests",
                   "Tropical & Subtropical Dry Broadleaf Forests" = "Tropical Forests",
@@ -572,15 +618,10 @@ lookup.table <- c("Tundra" = "Tundra", #Store these old values in a lookup table
                   "Mangroves" = "N/A",
                   "N/A" = "N/A")
 BIOMES$BIOME_RENAMED <- lookup.table[BIOMES$BIOME_NAME] #Create new column for renamed biomes, referencing original biomes
+BiomesRaster <- terra::rasterize(BIOMES, BurnedBiomesQtlCombined, "BIOME_RENAMED")
 
 
 
-BiomesRaster <- rasterize(BIOMES, AGB_Burn_Qtl, "BIOME_RENAMED")
-plot(BiomesRaster)
-
-
-AGB_Burn_Qtl
-BiomesRaster
 
 
 #Define function to get values for each cell
@@ -592,89 +633,169 @@ getValuesXY <- function(rast) {
 
   rastXY$ID <- 1:length(rastXY$x) #Add ID column for merging in subsequent step
 
-  rastValues <- list(rastXY, extractedValues) %>% reduce(left_join, by = "ID") %>% select(-ID) #Join dataframes
+  rastValues <- list(rastXY, extractedValues) %>% reduce(left_join, by = "ID") %>% dplyr::select(-ID) #Join dataframes
   return(rastValues)
 
 }
 
 
-AGB.Burn.Qtl <- getValuesXY(AGB_Burn_Qtl)
-BiomeNames <- getValuesXY(BiomesRaster)
 
-merged <- left_join(AGB.Burn.Qtl, BiomeNames)
-Merged <- merged %>% drop_na(aboveground_biomass_carbon_2010) %>% rename(AGBBurnQtl = aboveground_biomass_carbon_2010,
-                                                                         Biome = BIOME_RENAMED) %>%
+
+#Convert raster to df, then merge together and rename
+AGBBiomesQtlCombined_vals <- getValuesXY(AGBBiomesQtlCombined) %>% rename(AGB_BiomeQuantile = aboveground_biomass_carbon_2010)
+BGBBiomesQtlCombined_vals <- getValuesXY(BGBBiomesQtlCombined) %>% rename(BGB_BiomeQuantile = belowground_biomass_carbon_2010)
+BurnedBiomesQtlCombined_vals <- getValuesXY(BurnedBiomesQtlCombined) %>% rename(BurnedBiome_Qtl = layer)
+BiomeAgnostic_AGB_MgC_Qtl_vals <- getValuesXY(BiomeAgnostic_AGB_MgC_Qtl) %>% rename(AGB_BiomeAgnosticQuantile = aboveground_biomass_carbon_2010)
+BiomeAgnostic_BGB_MgC_Qtl_vals <- getValuesXY(BiomeAgnostic_BGB_MgC_Qtl) %>% rename(BGB_BiomeAgnosticQuantile = belowground_biomass_carbon_2010)
+BiomeAgnostic_BurnedArea_km2_Qtl_vals <- getValuesXY(BiomeAgnostic_BurnedArea_km2_Qtl) %>% rename(BurnedBiomeAgnostic_Qtl = layer)
+BiomeNames <- getValuesXY(BiomesRaster) %>% rename(Biome = BIOME_RENAMED)
+
+
+
+merged <- list(AGBBiomesQtlCombined_vals,
+               BGBBiomesQtlCombined_vals,
+               BurnedBiomesQtlCombined_vals,
+               BiomeAgnostic_AGB_MgC_Qtl_vals,
+               BiomeAgnostic_BGB_MgC_Qtl_vals,
+               BiomeAgnostic_BurnedArea_km2_Qtl_vals,
+               BiomeNames) %>% reduce(left_join)
+
+Merged <- merged %>% drop_na(AGB_BiomeQuantile) %>%
   filter(Biome != "NA",
          Biome != "N/A")
 
 
-#Plot dat, where the fill is abundance and transparency (alpha), is the respective uncertainty value
-Fig2B <- ggplot(data=Merged) +
-  theme_article() +
-  geom_tile(aes(x=x, y=y, fill=Biome, alpha= AGBBurnQtl)) +
-  geom_polygon(data = world.shp, aes(x = long, y = lat, group = group), color = 'gray20', fill = NA, size = 0.08) +
-  scale_alpha_continuous(guide = "none")+
-  scale_x_continuous(expand=c(0.01,0.01)) +
-  ylim(-55,87) +
-  theme(
-    legend.position = "right",
-    panel.border = element_rect(color = "black", fill = NA),
-    axis.text = element_text(color = "black"),
-    plot.tag = element_text(face = "bold")
-  ) +
-  scale_fill_manual(values = brewer.pal(8, "Dark2"))+
-  xlab("Longitude") +
-  ylab("Latitude") +
-  labs(tag = "B")
 
-plot_design <- "
-AAA
-BBB
-"
-plot_design <- "
-AAABBBB
-AAABBBB
-"
-Fig2A + Fig2B  +
-  plot_layout(design = plot_design#, guides = "collect"
-  )
+##Code for figure 2A----
+AGB_PgC <- conv_unit(AGB_MgC_ha*cellarea_ha, from = "Mg", to = "Pg") #Calculate total C in Megagrams per grid cell, then convert to Petagrams
+BGB_PgC <- conv_unit(BGB_MgC_ha*cellarea_ha, from = "Mg", to = "Pg") #Calculate total C in Megagrams per grid cell, then convert to Petagrams
 
-setwd("/Users/justinmathias/Desktop/Figs NCC Final")
-ggsave("Figure2x.tiff", units = c("in"), width = 11.5, height = 2.75)
-ggsave("Figure2y.tiff", units = c("in"), width = 8.5, height = 5)
+#Rasterize biomes SpatVector to same resolution as AGB_PgC and BGB_PgC
+Biomes <- rasterize(biomes, AGB_PgC, "BIOME_RENAMED")
+
+#Calculate sum of C for each biome in Pg
+AGB_PgC_Biomes <- zonal(AGB_PgC, Biomes, "sum", na.rm = TRUE)
+BGB_PgC_Biomes <- zonal(BGB_PgC, Biomes, "sum", na.rm = TRUE)
+#Calculate total area (i.e., sum) for each biome
+area_Biomes <- zonal(cellarea_ha, Biomes, "sum", na.rm = TRUE)
 
 
+#Create dataframe of above- and belowground carbon
+BiomeCarbon <- list(AGB_PgC_Biomes, BGB_PgC_Biomes, area_Biomes) %>% reduce(left_join, by = "BIOME_RENAMED") %>% #Join zonal summaries
+  mutate(AGBtoBGB = aboveground_biomass_carbon_2010/belowground_biomass_carbon_2010) %>% #Create column for ratio of above- to belowground biomass
+  rename(Biome = BIOME_RENAMED, AGB_PgC = aboveground_biomass_carbon_2010, BGB_PgC = belowground_biomass_carbon_2010, Area_ha = area) %>% #Rename columns for readability
+  mutate(area_Sum = sum(Area_ha)) %>% #Calculate sum of total land area before removing mangroves, rock and ice
+  filter(Biome != "N/A") %>% #Remove mangroves and rock and ice
+  mutate(AGB_MgC_ha = (conv_unit(AGB_PgC, from = "Pg", to = "Mg")/Area_ha), #Convert back to Mg from Pg
+         BGB_MgC_ha = (conv_unit(BGB_PgC, from = "Pg", to = "Mg")/Area_ha), #Convert back to Mg from Pg
+         Total_PgC = AGB_PgC + BGB_PgC, #Calculate total C, sum of above and belowground
+         Total_MgC_ha = (conv_unit(Total_PgC, from = "Pg", to = "Mg")/Area_ha), #Calculate total C per ha
+         BGB_PgC_below = BGB_PgC*-1, #Create negative values for BGB for certain plots for data visualization
+         BGB_MgC_ha_below = BGB_MgC_ha*-1,#Create negative values for BGB for certain plots for data visualization
+         area_Percent = Area_ha/area_Sum*100,#Calculate percent land area of Earth covered
+         AGB_percentC = AGB_PgC/sum(AGB_PgC)*100, #Calculate percent of AGB C in each biome
+         BGB_percentC = BGB_PgC/sum(BGB_PgC)*100)  #Calculate percent of BGB C in each biome
 
-# Temporary section until finalized figures -------------------------------
+##Create Figures!
+lookup.table2 <- c("Tundra" = "TUND", #Store these old values in a lookup table with new values assigned.
+                  "Tropical Forests" = "TROP",
+                  "Grasslands, Savannas & Shrublands" = "GRAS",
+                  "Mediterranean" = "MED",
+                  "Deserts" = "DSRT",
+                  "Boreal Forests" = "BORF",
+                  "Temperate Conifer Forests" = "TCF",
+                  "Temperate Broadleaf Forests" = "TBF"
+                  )
+BiomeCarbon$Biome2 <- lookup.table2[BiomeCarbon$Biome] #Create new column for renamed biomes, referencing original biomes
 
 
 
-Fig2A <-   BiomeCarbon %>%
-  ggplot(aes(x = reorder(Biome, Total_MgC_ha, mean))) +
-  geom_segment(aes(y = Total_MgC_ha, xend = Biome, yend = 0), linewidth = 0.9, alpha = 0.7) +
-  geom_segment(aes(y = BGB_MgC_ha_below, xend = Biome, yend = 0), linewidth = 0.9, alpha = 0.7) +
+Fig2A <-
+BiomeCarbon %>%
+  ggplot(aes(x = reorder(Biome2, Total_MgC_ha, mean))) +
+  geom_segment(aes(y = Total_MgC_ha, xend = Biome2, yend = 0), linewidth = 0.9, alpha = 0.7) +
+  geom_segment(aes(y = BGB_MgC_ha_below, xend = Biome2, yend = 0), linewidth = 0.9, alpha = 0.7) +
   geom_point(aes(y = BGB_MgC_ha_below, size = area_Percent, fill = Biome), pch = 21) + #Belowground carbon data
   geom_point(aes(y = Total_MgC_ha, size = area_Percent, fill = Biome), pch = 21) +
   geom_hline(yintercept = 0, color = "black", linetype = "dashed") +
   scale_fill_manual(values = brewer.pal(8, "Dark2"))+
-  coord_flip() +
+  # coord_flip() +
   xlab("") +
   ylab(expression("Carbon density (Mg C ha"^{-1}*")")) +
   theme_article()+
   theme(
-    legend.position = c(0.8,0.25),
-    axis.text = element_text(color = "black"),
+    legend.position = c(0.2,0.7),
+    axis.text = element_text(color = "black", size = 11),
+    axis.title = element_text(size = 12),
     panel.border = element_rect(color = "black"),
     text = element_text(color = "black"),
-    plot.tag = element_text(face = "bold")
+    plot.tag = element_text(face = "bold", size = 14),
+    axis.text.x = element_text(angle = 30, vjust = 0.6)
   ) +
   labs(size = "Area (%)") +
   ylim(c(-30,85)) +
-  labs(tag = "A") +
+  labs(tag = "a") +
   guides(fill = "none")
 
 
 
+#Fig 2B Aboveground biomass biome agnostic quartile * biome agnostic burned area quartile
+Fig2B <- ggplot(data=Merged) +
+  theme_article() +
+  # geom_tile(aes(x=x, y=y, fill=AGB_BiomeAgnosticQuantile*BurnedBiomeAgnostic_Qtl)) +
+  geom_raster(aes(x=x, y=y, fill=AGB_BiomeAgnosticQuantile*BurnedBiomeAgnostic_Qtl)) +
+  geom_polygon(data = world.shp, aes(x = long, y = lat, group = group), color = 'gray20', fill = NA, size = 0.08) +
+  scale_alpha_continuous(guide = "none")+
+  scale_x_continuous(expand=c(0.01,0.01)) +
+  ylim(-60,90) +
+  theme(
+    legend.position = "right",
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.text = element_text(color = "black", size = 11),
+    axis.title = element_text(size = 12),
+    plot.tag = element_text(face = "bold", size = 14)
+  ) +
+  # scale_fill_manual(values = brewer.pal(8, "Dark2"))+
+  scale_fill_viridis(option = "G", na.value="white", direction = -1) + #Direction reversed the color ramp
+  xlab("Longitude") +
+  ylab("Latitude") +
+  labs(tag = "b", fill = "AGB") #Fill AGB is legend name
+
+#Fig 2C Belowground biomass biome agnostic quartile * biome agnostic burned area quartile
+Fig2C <- ggplot(data=Merged) +
+  theme_article() +
+  # geom_tile(aes(x=x, y=y, fill=BGB_BiomeAgnosticQuantile*BurnedBiomeAgnostic_Qtl)) +
+  geom_raster(aes(x=x, y=y, fill=BGB_BiomeAgnosticQuantile*BurnedBiomeAgnostic_Qtl)) +
+  geom_polygon(data = world.shp, aes(x = long, y = lat, group = group), color = 'gray20', fill = NA, size = 0.08) +
+  scale_alpha_continuous(guide = "none")+
+  scale_x_continuous(expand=c(0.01,0.01)) +
+  ylim(-60,90) +
+  theme(
+    legend.position = "right",
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.text = element_text(color = "black", size = 11),
+    axis.title = element_text(size = 12),
+    plot.tag = element_text(face = "bold", size = 14)
+  ) +
+  # scale_fill_manual(values = brewer.pal(8, "Dark2"))+
+  scale_fill_viridis(option = "B", na.value="white", direction = -1) + #Direction reversed the color ramp
+  xlab("Longitude") +
+  ylab("Latitude") +
+  labs(tag = "c", fill = "BGB") #Fill BGB is legend name
+
+plot_design <- "
+AAA
+BBB
+CCC
+DDD
+"
+
+Fig2A + plot_spacer() + Fig2B  + Fig2C +
+  plot_layout(design = plot_design,#, guides = "collect"
+              heights = c(2.67, -0.5, 2.67, 2.66)) #Used plot spacer here to bring Panels A and B closer together
+
+setwd("/Users/justinmathias/Desktop/Working NCC/Figures")
+ggsave("Figure2.png", units = c("in"), width = 4.75, height = 8, dpi = 350)
 
 
 
@@ -683,12 +804,294 @@ Fig2A <-   BiomeCarbon %>%
 
 
 
+#Supplemental Figure!
+ggplot(data=Merged) +
+  theme_article() +
+  #geom_tile(aes(x=x, y=y, fill=AGB_BiomeQuantile*BurnedBiome_Qtl)) +
+  geom_raster(aes(x=x, y=y, fill=AGB_BiomeQuantile*BurnedBiome_Qtl)) +
+  geom_polygon(data = world.shp, aes(x = long, y = lat, group = group), color = 'gray50', fill = NA, size = 0.02) +
+  scale_alpha_continuous(guide = "none")+
+  scale_x_continuous(expand=c(0.01,0.01)) +
+  ylim(-60,90) +
+  theme(
+    legend.position = "right",
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.text = element_text(color = "black"),
+    plot.tag = element_text(face = "bold"),
+    strip.text = element_text(face = "bold")
+  ) +
+  scale_fill_viridis(option = "G", na.value="white", direction = -1) + #Direction reversed the color ramp
+  xlab("Longitude") +
+  ylab("Latitude") +
+  labs(fill = "AGB") +#Fill AGB is legend name
+  facet_wrap(~Biome, ncol = 2)
+
+
+ggsave("AGB_BiomesQtl.png", units = c("in"), dpi = 350, width = 6, height = 7)
+ggsave("AGB_BiomesQtl.pdf", units = c("in"), dpi = 350, width = 6, height = 7)
+
+
+
+ggplot(data=Merged) +
+  theme_article() +
+  #geom_tile(aes(x=x, y=y, fill=BGB_BiomeQuantile*BurnedBiome_Qtl)) +
+  geom_raster(aes(x=x, y=y, fill=BGB_BiomeQuantile*BurnedBiome_Qtl)) +
+  geom_polygon(data = world.shp, aes(x = long, y = lat, group = group), color = 'gray50', fill = NA, size = 0.02) +
+  scale_alpha_continuous(guide = "none")+
+  scale_x_continuous(expand=c(0.01,0.01)) +
+  ylim(-60,90) +
+  theme(
+    legend.position = "right",
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.text = element_text(color = "black"),
+    plot.tag = element_text(face = "bold"),
+    strip.text = element_text(face = "bold")
+  ) +
+  scale_fill_viridis(option = "B", na.value="white", direction = -1) + #Direction reversed the color ramp
+  xlab("Longitude") +
+  ylab("Latitude") +
+  labs(fill = "BGB") +#Fill BGB is legend name
+  facet_wrap(~Biome, ncol = 2)
+
+ggsave("BGB_BiomesQtl.png", units = c("in"), dpi = 350, width = 6, height = 7)
+ggsave("BGB_BiomesQtl.pdf", units = c("in"), dpi = 350, width = 6, height = 7)
+
+
+
+##Supplemental AGB, BGB, and Burned Area maps
+#Aboveground biomass
+tst <- getValuesXY(AGB_MgC_resampled_NAs) %>% drop_na()
+
+FigSXA <- ggplot(data=tst) +
+  theme_article() +
+  geom_raster(aes(x=x, y=y, fill= aboveground_biomass_carbon_2010)) +
+  geom_polygon(data = world.shp, aes(x = long, y = lat, group = group), color = 'gray20', fill = NA, size = 0.08) +
+  ylim(-55,87) +
+  theme(
+    legend.position = c(0.15,0.25),
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.text = element_text(color = "black", size = 11),
+    axis.title = element_text(size = 12),
+    plot.tag = element_text(face = "bold", size = 14),
+    legend.background = element_blank()
+  ) +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  scale_fill_gradientn(colors = c("white","#aedab0","#4dac53","#206226","#163117"),
+                       values = c(0, 0.1, 0.4, 1),
+                       name = expression("AGB (Mg C)")) +
+  labs(tag = "a")
+
+
+#AGB quartile biome agnostic
+tst2 <- BiomeAgnostic_AGB_MgC_Qtl_vals %>% drop_na()
+tst2$AGB_BiomeAgnosticQuantile <- as.character(tst2$AGB_BiomeAgnosticQuantile)
+
+FigSXB <- ggplot(data=tst2) +
+  theme_article() +
+  geom_raster(aes(x=x, y=y, fill= AGB_BiomeAgnosticQuantile)) +
+  geom_polygon(data = world.shp, aes(x = long, y = lat, group = group), color = 'gray20', fill = NA, size = 0.08) +
+  ylim(-55,87) +
+  theme(
+    legend.position = c(0.15,0.25),
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.text = element_text(color = "black", size = 11),
+    axis.title = element_text(size = 12),
+    plot.tag = element_text(face = "bold", size = 14),
+    legend.background = element_blank()
+  ) +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  scale_fill_manual(values = pal_npg(alpha = 0.8)(4),
+                    name = expression("AGB \n Quartile")) +
+  labs(tag = "b")
+
+#AGB quartile by biome
+tst3 <- AGBBiomesQtlCombined_vals %>% drop_na()
+tst3$AGB_BiomeQuantile <- as.character(tst3$AGB_BiomeQuantile)
+
+FigSXC <- ggplot(data=tst3) +
+  theme_article() +
+  geom_raster(aes(x=x, y=y, fill= AGB_BiomeQuantile)) +
+  geom_polygon(data = world.shp, aes(x = long, y = lat, group = group), color = 'gray20', fill = NA, size = 0.08) +
+  ylim(-55,87) +
+  theme(
+    legend.position = c(0.15,0.25),
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.text = element_text(color = "black", size = 11),
+    axis.title = element_text(size = 12),
+    plot.tag = element_text(face = "bold", size = 14),
+    legend.background = element_blank()
+  ) +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  scale_fill_manual(values = pal_npg(alpha = 0.8)(4),
+                    name = expression("AGB \n Quartile")) +
+  labs(tag = "c")
+
+
+
+#Belowground biomass
+tst4 <- getValuesXY(BGB_MgC_resampled_NAs) %>% drop_na()
+
+FigSXD <- ggplot(data=tst4) +
+  theme_article() +
+  geom_raster(aes(x=x, y=y, fill= belowground_biomass_carbon_2010)) +
+  geom_polygon(data = world.shp, aes(x = long, y = lat, group = group), color = 'gray20', fill = NA, size = 0.08) +
+  ylim(-55,87) +
+  theme(
+    legend.position = c(0.15,0.25),
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.text = element_text(color = "black", size = 11),
+    axis.title = element_text(size = 12),
+    plot.tag = element_text(face = "bold", size = 14),
+    legend.background = element_blank()
+  ) +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  scale_fill_gradientn(colors = c("white","#dbc8bc","#8b6248","#2a1e16"),
+                       values = c(0, 0.1, 0.4, 1),
+                       name = expression("BGB (Mg C)")) +
+  labs(tag = "d")
+
+
+#BGB quartile biome agnostic
+tst5 <- BiomeAgnostic_BGB_MgC_Qtl_vals %>% drop_na()
+tst5$BGB_BiomeAgnosticQuantile <- as.character(tst5$BGB_BiomeAgnosticQuantile)
+
+FigSXE <- ggplot(data=tst5) +
+  theme_article() +
+  geom_raster(aes(x=x, y=y, fill= BGB_BiomeAgnosticQuantile)) +
+  geom_polygon(data = world.shp, aes(x = long, y = lat, group = group), color = 'gray20', fill = NA, size = 0.08) +
+  ylim(-55,87) +
+  theme(
+    legend.position = c(0.15,0.25),
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.text = element_text(color = "black", size = 11),
+    axis.title = element_text(size = 12),
+    plot.tag = element_text(face = "bold", size = 14),
+    legend.background = element_blank()
+  ) +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  scale_fill_manual(values = pal_npg(alpha = 0.8)(4),
+                    name = expression("BGB \n Quartile")) +
+  labs(tag = "e")
+
+#BGB quartile by biome
+tst6 <- BGBBiomesQtlCombined_vals %>% drop_na()
+tst6$BGB_BiomeQuantile <- as.character(tst6$BGB_BiomeQuantile)
+
+FigSXF <- ggplot(data=tst6) +
+  theme_article() +
+  geom_raster(aes(x=x, y=y, fill= BGB_BiomeQuantile)) +
+  geom_polygon(data = world.shp, aes(x = long, y = lat, group = group), color = 'gray20', fill = NA, size = 0.08) +
+  ylim(-55,87) +
+  theme(
+    legend.position = c(0.15,0.25),
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.text = element_text(color = "black", size = 11),
+    axis.title = element_text(size = 12),
+    plot.tag = element_text(face = "bold", size = 14),
+    legend.background = element_blank()
+  ) +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  scale_fill_manual(values = pal_npg(alpha = 0.8)(4),
+                    name = expression("BGB \n Quartile")) +
+  labs(tag = "f")
 
 
 
 
 
+#Burned area
+tst7 <- getValuesXY(BurnedArea_km2_NAs) %>% drop_na()
 
+FigSXG <- ggplot(data=tst7) +
+  theme_article() +
+  geom_raster(aes(x=x, y=y, fill= layer)) +
+  geom_polygon(data = world.shp, aes(x = long, y = lat, group = group), color = 'gray20', fill = NA, size = 0.08) +
+  ylim(-55,87) +
+  theme(
+    legend.position = c(0.15,0.25),
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.text = element_text(color = "black", size = 11),
+    axis.title = element_text(size = 12),
+    plot.tag = element_text(face = "bold", size = 14),
+    legend.background = element_blank()
+  ) +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  scale_fill_gradientn(colors = c("white","orange","red", "purple","blue"),
+                       values = c(0, 0.075, 0.2, 0.5, 1), #This changes the map scale for burned area
+                       name = expression("Burned \n Area (km"^2*")")) +
+  labs(tag = "g")
+
+
+
+#Burned area biome agnostic
+tst8 <- BiomeAgnostic_BurnedArea_km2_Qtl_vals %>% drop_na()
+tst8$BurnedBiomeAgnostic_Qtl <- as.character(tst8$BurnedBiomeAgnostic_Qtl)
+
+
+FigSXH <- ggplot(data=tst8) +
+  theme_article() +
+  geom_raster(aes(x=x, y=y, fill= BurnedBiomeAgnostic_Qtl)) +
+  geom_polygon(data = world.shp, aes(x = long, y = lat, group = group), color = 'gray20', fill = NA, size = 0.08) +
+  ylim(-55,87) +
+  theme(
+    legend.position = c(0.15,0.25),
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.text = element_text(color = "black", size = 11),
+    axis.title = element_text(size = 12),
+    plot.tag = element_text(face = "bold", size = 14),
+    legend.background = element_blank()
+  ) +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  scale_fill_manual(values = pal_npg(alpha = 0.8)(4),
+                    name = expression("Burned \n Quartile")) +
+  labs(tag = "h")
+
+#Burned biome quartile
+tst9 <- BurnedBiomesQtlCombined_vals %>% drop_na()
+tst9$BurnedBiome_Qtl <- as.character(tst9$BurnedBiome_Qtl)
+
+FigSXI <- ggplot(data=tst9) +
+  theme_article() +
+  geom_raster(aes(x=x, y=y, fill= BurnedBiome_Qtl)) +
+  geom_polygon(data = world.shp, aes(x = long, y = lat, group = group), color = 'gray20', fill = NA, size = 0.08) +
+  ylim(-55,87) +
+  theme(
+    legend.position = c(0.15,0.25),
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.text = element_text(color = "black", size = 11),
+    axis.title = element_text(size = 12),
+    plot.tag = element_text(face = "bold", size = 14),
+    legend.background = element_blank()
+  ) +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  scale_fill_manual(values = pal_npg(alpha = 0.8)(4),
+                    name = expression("Burned \n Quartile")) +
+  labs(tag = "h")
+
+
+plot_design <- "
+AAABBBCCC
+AAABBBCCC
+DDDEEEFFF
+DDDEEEFFF
+GGGHHHIII
+GGGHHHIII
+"
+
+FigSXA + FigSXB  + FigSXC + FigSXD + FigSXE + FigSXF  + FigSXG + FigSXH + FigSXI +
+  plot_layout(design = plot_design#, guides = "collect"
+  )
+setwd("/Users/justinmathias/Desktop/Working NCC/Figures")
+ggsave("FigureSX.png", units = c("in"), width = 11.5, height = 8.25, dpi = 350)
 
 
 

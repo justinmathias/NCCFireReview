@@ -11,7 +11,7 @@ bg <- read.csv("https://raw.githubusercontent.com/justinmathias/NCCFireReview/ma
 tec <- read.csv("https://raw.githubusercontent.com/justinmathias/NCCFireReview/main/Data/Converted%20files/TECConverted_GFED.csv")
 
 
-
+source("/Users/justinmathias/Library/CloudStorage/Dropbox/Pirates!/Functions/mathiasfunctions.R")
 #+For this analysis, we want to calculate percent change for each variable in ag, bg, and tec, respectively.
 #+We then want to rbind all of the dataframes for each variable together so we have a long-format spreadsheet for analysis
 #+and visualization.
